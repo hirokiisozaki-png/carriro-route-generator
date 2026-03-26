@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CarriRo ルート設計ジェネレーター v4</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface2: #1c2128;
+  --border: #30363d;
+  --border-bright: #484f58;
+  --accent: #2f81f7;
+  --accent2: #3fb950;
+  --accent3: #f78166;
+  --accent4: #d2a8ff;
+  --text: #e6edf3;
+  --text-muted: #7d8590;
+  --text-dim: #484f58;
+  --ev-color: #f78166;
+  --turn-color: #d2a8ff;
+  --stop-color: #ffa657;
+  --straight-color: #3fb950;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.6; }
+
+/* ── Fix #1: select コントラスト ── */
+select { color-scheme: light; background-color: #1e2530 !important; color: #e6edf3 !important; }
+select option { background-color: #1e2530; color: #e6edf3; }
+.form-select { background-color: #0d1117 !important; color: #e6edf3 !important; }
+.form-select option { background-color: #1c2128; color: #e6edf3; }
+
+/* ── ヘッダー ── */
+.header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 28px; display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 100; }
+.header-icon { width: 34px; height: 34px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+.header h1 { font-size: 17px; font-weight: 700; color: var(--text); letter-spacing: 0.02em; }
+.header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.header-badge { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted); background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; }
+.save-indicator { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 5px; opacity: 0; transition: opacity 0.4s; }
+.save-indicator.show { opacity: 1; }
+.save-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); }
+
+/* ── レイアウト ── */
+.main { max-width: 1300px; margin: 0 auto; padding: 20px 18px; display: grid; grid-template-columns: 1fr 420px; gap: 18px; align-items: start; }
+
+/* ── カード ── */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.card-header { padding: 11px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 9px; background: var(--surface2); }
+.card-header h2 { font-size: 11px; font-weight: 600; color: var(--text); letter-spacing: 0.05em; text-transform: uppercase; }
+.card-body { padding: 16px; }
+
+/* ── フォーム ── */
+.form-group { margin-bottom: 13px; }
+.form-label { font-size: 11px; font-weight: 500; color: var(--text-muted); display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.06em; }
+.form-input, .form-select, .form-textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 11px; color: var(--text); font-family: 'Noto Sans JP', sans-serif; font-size: 13px; transition: border-color .15s, box-shadow .15s; appearance: none; -webkit-appearance: none; }
+.form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(47,129,247,.15); }
+.form-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237d8590'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; cursor: pointer; }
+.form-textarea { resize: vertical; min-height: 72px; font-size: 12px; line-height: 1.6; }
+
+/* ── テーブル ── */
+.route-table-wrap { overflow-x: auto; margin-bottom: 12px; }
+.route-table { width: 100%; border-collapse: separate; border-spacing: 0 3px; font-size: 13px; }
+.route-table thead tr th { padding: 7px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); text-align: left; background: var(--bg); border-bottom: 1px solid var(--border); }
+.route-row { background: var(--surface2); transition: background .1s; cursor: pointer; }
+.route-row:hover { background: #21262d; }
+.route-row.active-row { background: rgba(47,129,247,.12) !important; }
+.route-row td { padding: 5px 6px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); vertical-align: middle; }
+.route-row td:first-child { border-left: 1px solid var(--border); border-radius: 6px 0 0 6px; width: 30px; text-align: center; }
+.route-row td:last-child { border-right: 1px solid var(--border); border-radius: 0 6px 6px 0; width: 36px; text-align: center; }
+.route-row.fixed-row { background: rgba(47,129,247,.05); }
+.route-row.fixed-row td { border-color: rgba(47,129,247,.2); }
+.row-num { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim); user-select: none; }
+.route-row td.type-cell { padding: 5px 7px; width: 112px; }
+.type-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; width: 100%; }
+.type-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.route-table input, .route-table select { width: 100%; background: transparent; border: none; color: var(--text); font-family: 'Noto Sans JP', sans-serif; font-size: 13px; padding: 4px 2px; outline: none; transition: background .1s; border-radius: 4px; }
+.route-table input:focus, .route-table select:focus { background: rgba(47,129,247,.08); outline: 2px solid var(--accent); outline-offset: -1px; }
+.route-table select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%237d8590'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 3px center; padding-right: 14px; appearance: none; -webkit-appearance: none; cursor: pointer; }
+.b-other-input { display: none; margin-top: 4px; width: 100%; background: rgba(47,129,247,.06); border: 1px solid rgba(47,129,247,.25); border-radius: 4px; color: var(--text); font-family: 'Noto Sans JP', sans-serif; font-size: 12px; padding: 3px 6px; outline: none; }
+.b-other-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(47,129,247,.15); }
+.b-other-input.visible { display: block; }
+.route-row td.b-cell { vertical-align: top; padding-top: 6px; }
+
+/* ── ボタン ── */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: none; border-radius: 6px; font-family: 'Noto Sans JP', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; white-space: nowrap; }
+.btn-add { background: rgba(63,185,80,.15); color: var(--accent2); border: 1px solid rgba(63,185,80,.3); }
+.btn-add:hover { background: rgba(63,185,80,.25); border-color: var(--accent2); }
+.btn-del { background: transparent; color: var(--text-dim); border: 1px solid transparent; padding: 4px 7px; font-size: 14px; border-radius: 4px; }
+.btn-del:hover { background: rgba(247,129,102,.15); color: var(--accent3); border-color: rgba(247,129,102,.3); }
+.btn-copy { width: 100%; justify-content: center; background: var(--accent); color: #fff; font-size: 14px; font-weight: 700; padding: 12px; border-radius: 8px; border: none; letter-spacing: .03em; }
+.btn-copy:hover { background: #1f6feb; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(47,129,247,.3); }
+.btn-copy:active { transform: translateY(0); }
+.btn-clear { background: transparent; color: var(--text-muted); border: 1px solid var(--border); font-size: 12px; padding: 5px 10px; }
+.btn-clear:hover { border-color: var(--accent3); color: var(--accent3); }
+
+/* ── ステータス ── */
+.status-bar { display: flex; align-items: center; gap: 12px; padding: 8px 13px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 13px; font-size: 12px; color: var(--text-muted); }
+.status-item { display: flex; align-items: center; gap: 5px; }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+/* ─────────────────────────────────────────
+   動線マップ Canvas
+───────────────────────────────────────── */
+
+/* 複数フロアのパネルを縦並びで収容するコンテナ */
+#mapPanels { display: flex; flex-direction: column; gap: 0; }
+
+/* 各フロアパネル */
+.floor-panel {
+  border-bottom: 1px solid var(--border);
+}
+.floor-panel:last-child { border-bottom: none; }
+
+/* フロアラベルバー */
+.floor-label-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+}
+.floor-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 3px;
+  color: #e6edf3;
+}
+.floor-name { color: var(--text-muted); font-size: 11px; }
+
+/* EV接続インジケーター（フロア間の矢印帯） */
+.ev-connector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(247,129,102,0.07);
+  border-top: 1px dashed rgba(247,129,102,0.3);
+  border-bottom: 1px dashed rgba(247,129,102,0.3);
+  font-size: 11px;
+  color: #f78166;
+}
+.ev-connector-arrow { font-size: 14px; }
+
+/* キャンバスラップ */
+.map-wrap {
+  position: relative;
+  background: #090d13;
+  overflow: hidden;
+}
+.map-wrap canvas {
+  display: block;
+  width: 100%;
+}
+
+/* 旧 #routeCanvas（後方互換） */
+#routeCanvas { display: block; width: 100%; }
+
+.map-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--surface2);
+  border-top: 1px solid var(--border);
+}
+.map-controls span { font-size: 11px; color: var(--text-muted); }
+.btn-map { background: transparent; color: var(--text-muted); border: 1px solid var(--border); font-size: 11px; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-family: 'Noto Sans JP', sans-serif; transition: all .15s; }
+.btn-map:hover { border-color: var(--accent); color: var(--accent); }
+.map-legend { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 10px; border-top: 1px solid var(--border); }
+.map-legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text-muted); }
+.map-legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+.map-legend-line { width: 14px; height: 3px; border-radius: 1px; }
+
+/* ── テキストプレビュー ── */
+.preview-output { font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1.75; color: #8b949e; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 12px; max-height: 220px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
+
+/* ── ガイド ── */
+.guide-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; }
+.guide-item { display: flex; align-items: flex-start; gap: 7px; padding: 7px 9px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; font-size: 11px; }
+.guide-dot { width: 7px; height: 7px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+.guide-title { font-weight: 600; color: var(--text); margin-bottom: 1px; }
+.guide-desc { color: var(--text-muted); }
+
+/* ── トースト ── */
+.toast { position: fixed; bottom: 20px; right: 20px; background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--accent2); border-radius: 8px; padding: 11px 16px; font-size: 13px; color: var(--text); box-shadow: 0 8px 32px rgba(0,0,0,.4); transform: translateY(70px); opacity: 0; transition: all .3s cubic-bezier(.34,1.56,.64,1); z-index: 999; pointer-events: none; }
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.error { border-left-color: var(--accent3); }
+.toast.info  { border-left-color: var(--accent); }
+
+.section-divider { height: 1px; background: var(--border); margin: 14px 0; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+.preview-panel { position: sticky; top: 66px; }
+
+@media (max-width: 900px) {
+  .main { grid-template-columns: 1fr; }
+  .preview-panel { position: static; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-icon">🤖</div>
+  <h1>CarriRo ルート設計データジェネレーター</h1>
+  <div class="header-right">
+    <div class="save-indicator" id="saveIndicator">
+      <div class="save-dot"></div><span>自動保存済み</span>
+    </div>
+    <span class="header-badge">v4.0</span>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- ── 左カラム ── -->
+  <div class="left-col">
+
+    <!-- 基本情報 -->
+    <div class="card" style="margin-bottom:13px;">
+      <div class="card-header"><span>📋</span><h2>ルート基本情報</h2></div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">ルート名</label>
+            <input type="text" id="routeName" class="form-input"
+              placeholder="例：パターン① 往路 D→EV→A" oninput="onChange()">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">担当機体</label>
+            <select id="unitNo" class="form-select" onchange="onChange()">
+              <option value="1号機（経路①）">1号機（経路①）</option>
+              <option value="2号機（経路②）">2号機（経路②）</option>
+              <option value="共通">共通</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ステータス -->
+    <div class="status-bar">
+      <div class="status-item"><div class="status-dot" style="background:var(--accent2);"></div><span id="statRows">0 行</span></div>
+      <div class="status-item"><div class="status-dot" style="background:var(--turn-color);"></div><span id="statTurns">旋回 0</span></div>
+      <div class="status-item"><div class="status-dot" style="background:var(--ev-color);"></div><span id="statEV">EV 0</span></div>
+      <div class="status-item"><div class="status-dot" style="background:var(--stop-color);"></div><span id="statStop">停止 0</span></div>
+      <div style="margin-left:auto;"><span id="statDist" style="color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:11px;"></span></div>
+    </div>
+
+    <!-- ルートテーブル -->
+    <div class="card" style="margin-bottom:13px;">
+      <div class="card-header">
+        <span>🗺</span><h2>ルート入力</h2>
+        <div style="margin-left:auto;display:flex;gap:7px;">
+          <button class="btn btn-clear" onclick="clearAll()">クリア</button>
+        </div>
+      </div>
+      <div class="card-body" style="padding:13px;">
+        <div class="route-table-wrap">
+          <table class="route-table" id="routeTable">
+            <thead>
+              <tr>
+                <th style="width:28px;">#</th>
+                <th style="width:115px;">項目</th>
+                <th>距離・方向・場所</th>
+                <th style="width:170px;">特記事項</th>
+                <th style="width:32px;"></th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+        <button class="btn btn-add" onclick="addRow()">＋ 行を追加</button>
+      </div>
+    </div>
+
+    <!-- 特殊条件 -->
+    <div class="card" style="margin-bottom:13px;">
+      <div class="card-header"><span>⚙</span><h2>案件固有の特殊条件</h2></div>
+      <div class="card-body">
+        <div class="form-group" style="margin-bottom:9px;">
+          <label class="form-label">EV連携・特記ルールなど</label>
+          <textarea id="specialRules" class="form-textarea"
+            placeholder="例：&#10;- EV入口1.5m手前に可変（一時停止）配置&#10;- EVから「開」信号受信後、2m前進して停止&#10;- 退出後3.5mバック → 左Uターン → 扉閉めトリガー送信"
+            oninput="onChange()"></textarea>
+        </div>
+        <div class="guide-grid">
+          <div class="guide-item"><div class="guide-dot" style="background:var(--straight-color);"></div><div><div class="guide-title">直進</div><div class="guide-desc">距離をmmで入力<br>例：16,000mm</div></div></div>
+          <div class="guide-item"><div class="guide-dot" style="background:var(--turn-color);"></div><div><div class="guide-title">コーナー・旋回</div><div class="guide-desc">方向をプルダウンで選択</div></div></div>
+          <div class="guide-item"><div class="guide-dot" style="background:var(--stop-color);"></div><div><div class="guide-title">停止・連携・特殊</div><div class="guide-desc">「その他」選択で手入力欄出現</div></div></div>
+          <div class="guide-item"><div class="guide-dot" style="background:var(--ev-color);"></div><div><div class="guide-title">起点 / 終点</div><div class="guide-desc">場所名をテキストで入力</div></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /left-col -->
+
+  <!-- ── 右カラム ── -->
+  <div class="preview-panel">
+
+    <!-- ▼▼▼ 動線マップ（マルチフロア対応） ▼▼▼ -->
+    <div class="card" style="margin-bottom:13px;">
+      <div class="card-header">
+        <span>📐</span><h2>動線マップ（リアルタイム）</h2>
+        <div style="margin-left:auto; display:flex; gap:6px; align-items:center;">
+          <span id="rotateLabel" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#484f58;min-width:28px;text-align:right;">0°</span>
+          <button class="btn-map" onclick="mapRotate(-90)" title="左に90°回転">↺</button>
+          <button class="btn-map" onclick="mapRotate(90)"  title="右に90°回転">↻</button>
+          <div style="width:1px;height:14px;background:#30363d;margin:0 2px;"></div>
+          <button class="btn-map" onclick="mapZoom(1.2)" title="拡大">＋</button>
+          <button class="btn-map" onclick="mapZoom(1/1.2)" title="縮小">－</button>
+          <button class="btn-map" onclick="mapFit()" title="全体表示・回転リセット">⊡ FIT</button>
+        </div>
+      </div>
+
+      <!-- フロアパネルを動的生成するコンテナ -->
+      <div id="mapPanels"></div>
+
+      <div class="map-controls">
+        <span id="mapInfo">行をクリックで強調表示</span>
+      </div>
+      <!-- 凡例 -->
+      <div class="map-legend">
+        <div class="map-legend-item"><div class="map-legend-line" style="background:#3fb950;"></div><span>直進</span></div>
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:#d2a8ff;"></div><span>旋回</span></div>
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:#ffa657;"></div><span>停止/特殊</span></div>
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:#f78166;"></div><span>EV乗込</span></div>
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:#79c0ff;"></div><span>EV退出</span></div>
+        <div class="map-legend-item"><div class="map-legend-line" style="background:#2f81f7; height:3px;"></div><span>編集中</span></div>
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:#2f81f7;width:10px;height:10px;border-radius:50%;"></div><span>起/終点</span></div>
+      </div>
+    </div>
+    <!-- ▲▲▲ 動線マップ ▲▲▲ -->
+
+    <!-- テキストプレビュー -->
+    <div class="card" style="margin-bottom:13px;">
+      <div class="card-header"><span>👁</span><h2>AI用データプレビュー</h2></div>
+      <div class="card-body">
+        <div class="preview-output" id="previewOutput">— 入力するとリアルタイムで表示されます —</div>
+      </div>
+    </div>
+
+    <button class="btn btn-copy" onclick="generateAndCopy()">📋　AI用テキストをコピー</button>
+    <div style="margin-top:9px;text-align:center;font-size:11px;color:var(--text-muted);">コピー後、Claudeのプロンプトに貼り付けてください</div>
+
+    <div class="section-divider"></div>
+
+    <!-- テンプレート -->
+    <div class="card">
+      <div class="card-header"><span>📂</span><h2>テンプレート呼び出し</h2></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:6px;">
+        <button class="btn" style="background:rgba(47,129,247,.1);color:var(--accent);border:1px solid rgba(47,129,247,.3);width:100%;justify-content:flex-start;" onclick="loadTemplate('route1_fwd')">📌 経路①往路 D→EV→A</button>
+        <button class="btn" style="background:rgba(47,129,247,.1);color:var(--accent);border:1px solid rgba(47,129,247,.3);width:100%;justify-content:flex-start;" onclick="loadTemplate('route1_ret')">📌 経路①復路 A→EV→D</button>
+        <button class="btn" style="background:rgba(210,168,255,.1);color:var(--accent4);border:1px solid rgba(210,168,255,.3);width:100%;justify-content:flex-start;" onclick="loadTemplate('route2_fwd')">📌 経路②往路 C→EV→B</button>
+        <button class="btn" style="background:rgba(210,168,255,.1);color:var(--accent4);border:1px solid rgba(210,168,255,.3);width:100%;justify-content:flex-start;" onclick="loadTemplate('route2_ret')">📌 経路②復路 B→EV→C</button>
+      </div>
+    </div>
+
+  </div><!-- /preview-panel -->
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   定数
+═══════════════════════════════════════════════════════ */
+const ITEM_CATEGORIES = [
+  { value:'起点',           group:'point',    dot:'#2f81f7', label:'起 点' },
+  { value:'終点',           group:'point',    dot:'#2f81f7', label:'終 点' },
+  { value:'直進',           group:'straight', dot:'#3fb950', label:'直 進' },
+  { value:'コーナー・旋回', group:'corner',   dot:'#d2a8ff', label:'コーナー' },
+  { value:'停止・連携・特殊',group:'special',  dot:'#ffa657', label:'停止/特殊' },
+];
+const GROUP_DOT    = { point:'#2f81f7', straight:'#3fb950', corner:'#d2a8ff', special:'#ffa657' };
+const CORNER_OPTIONS  = ['左カーブ','右カーブ','左旋回','右旋回','左Uターン','右Uターン'];
+const SPECIAL_OPTIONS = ['一時停止','待機','EV乗り込み','EV退出','自動充電開始','その他'];
+const LS_KEY = 'carriro_v4_state';
+
+let saveTimer    = null;
+let rowCounter   = 0;
+let activeRowIdx = -1;   // 強調表示する行インデックス
+
+/* ═══════════════════════════════════════════════════════
+   ─── CANVAS 動線マップ（マルチフロア対応） ───────────
+═══════════════════════════════════════════════════════ */
+const CV_W = 400;
+let cvScale  = 1.0;
+let cvRotate = 0;
+
+const FLOOR_COLORS = ['#1f6feb','#238636','#9a3412','#7c3aed','#b45309','#0e7490','#be185d','#374151'];
+
+function isEvExit (v) { return v && (v.includes('EV退出') || v.includes('退出')); }
+function isEvBoard(v) { return v && (v.includes('EV乗り込み') || v.includes('乗り込み')); }
+
+function buildSegments() {
+  const segs = [];
+  Array.from(document.querySelectorAll('#tableBody .route-row')).forEach((tr, idx) => {
+    const fixed = tr.dataset.fixed;
+    const type  = fixed === 'start' ? '起点' : fixed === 'end' ? '終点'
+                : (tr.querySelector('.type-select') || {}).value || '';
+    const val   = getBValue(tr);
+    const note  = (tr.querySelector('.note-input') || {}).value || '';
+    segs.push({ idx, type, val, note, fixed });
+  });
+  return segs;
+}
+
+function buildFloors(segs) {
+  const floors = [];
+  let fi = 0, buf = [];
+  const st = segs.find(s => s.fixed === 'start');
+  let flLabel = st && st.val ? st.val.slice(0,16) : 'フロア 1';
+  segs.forEach(seg => {
+    if (seg.type === '停止・連携・特殊' && isEvExit(seg.val)) {
+      buf.push({ ...seg, _evExit: true });
+      floors.push({ idx: fi, label: flLabel, segs: buf, color: FLOOR_COLORS[fi % FLOOR_COLORS.length] });
+      fi++; buf = [];
+      flLabel = seg.note ? seg.note.slice(0,16) : `フロア ${fi + 1}`;
+      return;
+    }
+    buf.push(seg);
+  });
+  if (buf.length) {
+    const en = buf.find(s => s.fixed === 'end');
+    if (en && en.val) flLabel = en.val.slice(0,16);
+    floors.push({ idx: fi, label: flLabel, segs: buf, color: FLOOR_COLORS[fi % FLOOR_COLORS.length] });
+  }
+  return floors.length ? floors : [{ idx:0, label:'フロア 1', segs, color: FLOOR_COLORS[0] }];
+}
+
+function parseMm(s) {
+  if (!s) return 0;
+  const m = s.replace(/,/g,'').match(/(\d+(?:\.\d+)?)/);
+  return m ? parseFloat(m[1]) : 0;
+}
+function turnAngleDeg(v) {
+  if (!v) return 0;
+  if (v.includes('Uターン')) return v.includes('左') ? 180 : -180;
+  if (v.includes('左旋回') || v.includes('左カーブ')) return 90;
+  if (v.includes('右旋回') || v.includes('右カーブ')) return -90;
+  return 0;
+}
+
+function buildPoints(segs, initAngle = 0) {
+  const pts = [];
+  const PX = 50 / 10000, RAD = Math.PI / 180;
+  let x = 0, y = 0, ang = initAngle;
+  const stSeg = segs.find(s => s.fixed === 'start');
+  pts.push({ x, y, idx: stSeg ? stSeg.idx : -1, type:'start', note: stSeg ? (stSeg.val||'') : '' });
+  segs.forEach(seg => {
+    if (seg.fixed === 'start') { pts[0].note = seg.val||''; return; }
+    if (seg.type === '直進') {
+      const mm = parseMm(seg.val) || 10000, d = mm * PX;
+      const nx = x + d*Math.sin(ang*RAD), ny = y + d*Math.cos(ang*RAD);
+      pts.push({ x:nx, y:ny, idx:seg.idx, type:'straight', note:seg.note, dist:mm, fromX:x, fromY:y });
+      x=nx; y=ny;
+    } else if (seg.type === 'コーナー・旋回') {
+      const da = turnAngleDeg(seg.val); ang += da;
+      pts.push({ x, y, idx:seg.idx, type:'corner', note:seg.note, val:seg.val, delta:da });
+    } else if (seg.type === '停止・連携・特殊') {
+      const t = seg._evExit ? 'ev_exit' : isEvBoard(seg.val) ? 'ev_board' : 'stop';
+      pts.push({ x, y, idx:seg.idx, type:t, note:seg.note, val:seg.val });
+    } else if (seg.fixed === 'end') {
+      pts.push({ x, y, idx:seg.idx, type:'endpoint', note:seg.val||'' });
+    }
+  });
+  return { pts, finalAngle: ang };
+}
+
+function drawFloorCanvas(canvas, pts, floorColor) {
+  const rad = cvRotate*Math.PI/180, cosR=Math.cos(rad), sinR=Math.sin(rad);
+  const rot = (x,y) => ({ x:x*cosR-y*sinR, y:x*sinR+y*cosR });
+  const rp  = pts.map(p => {
+    const r = rot(p.x,p.y), b = {...p, x:r.x, y:r.y};
+    if (p.fromX!==undefined) { const f=rot(p.fromX,p.fromY); b.fromX=f.x; b.fromY=f.y; }
+    return b;
+  });
+  const xs=rp.map(p=>p.x), ys=rp.map(p=>p.y);
+  const minX=Math.min(...xs)-24, maxX=Math.max(...xs)+24;
+  const minY=Math.min(...ys)-24, maxY=Math.max(...ys)+24;
+  const dW=maxX-minX||1, dH=maxY-minY||1;
+  const wW=canvas.parentElement.clientWidth||400;
+  const sc=Math.min((wW-4)/dW, 440/dH)*cvScale;
+  const cW=Math.ceil(dW*sc)+4, cH=Math.ceil(dH*sc)+4;
+  canvas.width=cW; canvas.height=cH; canvas.style.height=cH+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,cW,cH);
+  const tx=lx=>(lx-minX)*sc+2, ty=ly=>(ly-minY)*sc+2;
+  ctx.strokeStyle='rgba(255,255,255,0.04)'; ctx.lineWidth=0.5;
+  for(let g=Math.floor(minX/50)*50;g<=maxX;g+=50){ ctx.beginPath();ctx.moveTo(tx(g),0);ctx.lineTo(tx(g),cH);ctx.stroke(); }
+  for(let g=Math.floor(minY/50)*50;g<=maxY;g+=50){ ctx.beginPath();ctx.moveTo(0,ty(g));ctx.lineTo(cW,ty(g));ctx.stroke(); }
+  rp.forEach(p => {
+    if (p.type!=='straight') return;
+    const act = p.idx===activeRowIdx;
+    if(act){ctx.save();ctx.shadowColor='#2f81f7';ctx.shadowBlur=12;}
+    ctx.beginPath();ctx.moveTo(tx(p.fromX),ty(p.fromY));ctx.lineTo(tx(p.x),ty(p.y));
+    ctx.strokeStyle=act?'#2f81f7':'#3fb950';ctx.lineWidth=act?4:2.5;
+    ctx.setLineDash(act?[6,3]:[]);ctx.stroke();ctx.setLineDash([]);
+    if(act)ctx.restore();
+    const mx=(tx(p.fromX)+tx(p.x))/2,my=(ty(p.fromY)+ty(p.y))/2;
+    const dx=tx(p.x)-tx(p.fromX),dy=ty(p.y)-ty(p.fromY),len=Math.sqrt(dx*dx+dy*dy);
+    if(len>28){
+      const lb=p.dist>=1000?`${(p.dist/1000).toFixed(0)}m`:`${p.dist}mm`;
+      const nt=p.note?p.note.slice(0,8)+(p.note.length>8?'...':''):'';
+      ctx.save();ctx.translate(mx,my);
+      if(Math.abs(dy)>Math.abs(dx)) drawLabel(ctx,lb,nt,12,-6,act?'#2f81f7':'#3fb950',act);
+      else                           drawLabel(ctx,lb,nt,0,-19,act?'#2f81f7':'#3fb950',act);
+      ctx.restore();
+    }
+  });
+  rp.forEach(p => {
+    const cx=tx(p.x),cy=ty(p.y),act=p.idx===activeRowIdx;
+    if(p.type==='straight') return;
+    if(p.type==='corner'){
+      const r=act?9:6;
+      ctx.save();if(act){ctx.shadowColor='#d2a8ff';ctx.shadowBlur=10;}
+      ctx.beginPath();ctx.moveTo(cx,cy-r);ctx.lineTo(cx+r,cy);ctx.lineTo(cx,cy+r);ctx.lineTo(cx-r,cy);ctx.closePath();
+      ctx.fillStyle=act?'#d2a8ff':'#9060b0';ctx.fill();ctx.restore();
+      const al=p.val?p.val.replace('旋回','').replace('カーブ',''):'';
+      if(al){ctx.fillStyle=act?'#e6edf3':'#9d6ac0';ctx.font=`bold ${act?11:9}px 'Noto Sans JP',sans-serif`;ctx.textAlign='left';ctx.fillText(al,cx+(act?11:8),cy+4);}
+    } else if(p.type==='stop'){
+      drawCircleNode(ctx,cx,cy,act?8:5,'#ffa657',act,p.val||'停止');
+    } else if(p.type==='ev_board'){
+      const r=act?11:8;
+      ctx.save();if(act){ctx.shadowColor='#f78166';ctx.shadowBlur=12;}
+      ctx.beginPath();ctx.moveTo(cx,cy-r);ctx.lineTo(cx+r,cy);ctx.lineTo(cx,cy+r);ctx.lineTo(cx-r,cy);ctx.closePath();
+      ctx.fillStyle=act?'#f78166':'#c0522a';ctx.fill();ctx.restore();
+      ctx.fillStyle='#e6edf3';ctx.font="bold 8px 'JetBrains Mono',monospace";ctx.textAlign='center';ctx.fillText('EV+',cx,cy-r-4);
+    } else if(p.type==='ev_exit'){
+      const r=act?11:8;
+      ctx.save();if(act){ctx.shadowColor='#79c0ff';ctx.shadowBlur=12;}
+      ctx.beginPath();ctx.moveTo(cx,cy-r);ctx.lineTo(cx+r,cy);ctx.lineTo(cx,cy+r);ctx.lineTo(cx-r,cy);ctx.closePath();
+      ctx.fillStyle=act?'#79c0ff':'#1a6090';ctx.fill();ctx.restore();
+      ctx.fillStyle='#e6edf3';ctx.font="bold 8px 'JetBrains Mono',monospace";ctx.textAlign='center';ctx.fillText('EV-',cx,cy-r-4);
+    } else if(p.type==='start'){
+      drawCircleNode(ctx,cx,cy,10,floorColor,false,p.note?p.note.slice(0,4):'ST',true);
+    } else if(p.type==='endpoint'){
+      drawCircleNode(ctx,cx,cy,10,floorColor,false,p.note?p.note.slice(0,4):'GL',true);
+    }
+  });
+  rp.forEach(p=>{
+    if(p.idx===activeRowIdx&&p.type==='straight'){
+      ctx.save();ctx.beginPath();ctx.arc(tx(p.fromX),ty(p.fromY),5,0,Math.PI*2);
+      ctx.fillStyle='#2f81f7';ctx.shadowColor='#2f81f7';ctx.shadowBlur=8;ctx.fill();ctx.restore();
+    }
+  });
+}
+
+function drawLabel(ctx,main,sub,ox,oy,color,bold){
+  const mf=`${bold?'bold ':''} ${bold?10:9}px 'JetBrains Mono',monospace`;
+  ctx.font=mf;const tw=ctx.measureText(main).width;
+  ctx.fillStyle='rgba(13,17,23,0.82)';ctx.beginPath();ctx.roundRect(ox-tw/2-4,oy,tw+8,sub?22:13,3);ctx.fill();
+  ctx.fillStyle=bold?'#7dd3fc':color;ctx.font=mf;ctx.textAlign='center';ctx.fillText(main,ox,oy+10);
+  if(sub){ctx.font="8px 'Noto Sans JP',sans-serif";ctx.fillStyle='#7d8590';ctx.fillText(sub,ox,oy+20);}
+}
+function drawCircleNode(ctx,cx,cy,r,color,glow,label,isEnd){
+  ctx.save();if(glow){ctx.shadowColor=color;ctx.shadowBlur=12;}
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
+  if(isEnd){ctx.strokeStyle='#e6edf3';ctx.lineWidth=1.5;ctx.stroke();}ctx.restore();
+  if(label){ctx.fillStyle='#e6edf3';ctx.font=`bold ${r>7?9:8}px 'JetBrains Mono',monospace`;ctx.textAlign='center';ctx.fillText(label.slice(0,4),cx,cy-r-4);}
+}
+
+function drawAllMaps() {
+  const container = document.getElementById('mapPanels');
+  if (!container) return;
+  const segs   = buildSegments();
+  const floors = buildFloors(segs);
+  let angle = 0;
+  const floorPts = floors.map(fl => {
+    const { pts, finalAngle } = buildPoints(fl.segs, angle);
+    angle = finalAngle;
+    return pts;
+  });
+  let activeFloor = -1;
+  if (activeRowIdx >= 0) {
+    floors.forEach((fl,fi) => { if(fl.segs.some(s=>s.idx===activeRowIdx)) activeFloor=fi; });
+  }
+  const existing = container.querySelectorAll('.floor-panel');
+  if (existing.length !== floors.length) {
+    container.innerHTML = '';
+    floors.forEach((fl,fi) => container.appendChild(buildFloorPanel(fl,fi)));
+    insertEvConnectors(container, floors);
+  }
+  container.querySelectorAll('.floor-panel').forEach((panel, fi) => {
+    panel.style.outline = fi===activeFloor ? '2px solid rgba(47,129,247,0.4)' : 'none';
+    const cv = panel.querySelector('canvas');
+    if (cv && floorPts[fi]) drawFloorCanvas(cv, floorPts[fi], floors[fi].color);
+  });
+  const total = floorPts.reduce((s,p)=>s+p.length,0);
+  document.getElementById('mapInfo').textContent =
+    activeRowIdx>=0
+      ? `行 ${activeRowIdx+1} を強調中（フロア ${activeFloor+1}）  ·  クリックで解除`
+      : `${floors.length}フロア構成  ·  ↺↻ で回転  ·  総ポイント：${total}`;
+}
+
+function buildFloorPanel(fl, fi) {
+  const div=document.createElement('div'); div.className='floor-panel';
+  const bar=document.createElement('div'); bar.className='floor-label-bar';
+  bar.innerHTML=`<span class="floor-badge" style="background:${fl.color};">フロア ${fi+1}</span><span class="floor-name">${escapeHtml(fl.label)}</span>`;
+  div.appendChild(bar);
+  const wrap=document.createElement('div'); wrap.className='map-wrap';
+  const cv=document.createElement('canvas'); cv.dataset.floorIdx=fi;
+  wrap.appendChild(cv); div.appendChild(wrap);
+  return div;
+}
+
+function insertEvConnectors(container, floors) {
+  const panels=Array.from(container.querySelectorAll('.floor-panel'));
+  for(let i=0;i<panels.length-1;i++){
+    const evSeg=floors[i].segs.find(s=>s.type==='停止・連携・特殊'&&isEvBoard(s.val));
+    const note=evSeg?(evSeg.note||'EV連携'):'EV連携';
+    const conn=document.createElement('div'); conn.className='ev-connector';
+    conn.innerHTML=`<span>フロア ${i+1}</span><span class="ev-connector-arrow">&#x2195;</span><span style="font-family:'JetBrains Mono',monospace;">${escapeHtml(note)}</span><span class="ev-connector-arrow">&#x2195;</span><span>フロア ${i+2}</span>`;
+    panels[i].insertAdjacentElement('afterend',conn);
+  }
+}
+
+function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function mapRotate(deg) {
+  cvRotate=((cvRotate+deg)%360+360)%360;
+  const l=document.getElementById('rotateLabel'); if(l) l.textContent=cvRotate===0?'0 deg':`${cvRotate} deg`;
+  drawAllMaps();
+}
+function mapZoom(factor) { cvScale=Math.max(0.2,Math.min(6,cvScale*factor)); drawAllMaps(); }
+function mapFit() {
+  cvScale=1.0; cvRotate=0; activeRowIdx=-1;
+  const l=document.getElementById('rotateLabel'); if(l) l.textContent='0 deg';
+  document.querySelectorAll('.route-row.active-row').forEach(r=>r.classList.remove('active-row'));
+  drawAllMaps();
+}
+
+function onRowClick(tr) {
+  const idx=parseInt(tr.dataset.rowIdx);
+  if(activeRowIdx===idx){ activeRowIdx=-1; tr.classList.remove('active-row'); }
+  else { document.querySelectorAll('.route-row.active-row').forEach(r=>r.classList.remove('active-row')); tr.classList.add('active-row'); activeRowIdx=idx; }
+  drawAllMaps();
+}
+
+(function(){
+  const c=document.getElementById('mapPanels'); if(!c) return;
+  new ResizeObserver(()=>drawAllMaps()).observe(c.parentElement||c);
+})();
+
+/* ═══════════════════════════════════════════════════════
+   LocalStorage
+═══════════════════════════════════════════════════════ */
+function onChange() {
+  updatePreview();
+  scheduleSave();
+}
+
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveToStorage, 600);
+}
+
+function saveToStorage() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(buildStateObject()));
+    flashSaveIndicator();
+  } catch(e) {}
+}
+
+function buildStateObject() {
+  const rows = [];
+  document.querySelectorAll('#tableBody .route-row').forEach(tr => {
+    const fixedType  = tr.dataset.fixed || null;
+    const typeSel    = tr.querySelector('.type-select');
+    const bSel       = tr.querySelector('.b-select');
+    const valInput   = tr.querySelector('.val-input');
+    const otherInput = tr.querySelector('.b-other-input');
+    const noteInput  = tr.querySelector('.note-input');
+    rows.push({
+      fixed:  fixedType,
+      type:   typeSel    ? typeSel.value    : (fixedType==='start'?'起点':'終点'),
+      bSel:   bSel       ? bSel.value       : '',
+      val:    valInput   ? valInput.value   : '',
+      other:  otherInput ? otherInput.value : '',
+      note:   noteInput  ? noteInput.value  : '',
+    });
+  });
+  return {
+    routeName: document.getElementById('routeName').value,
+    unitNo:    document.getElementById('unitNo').value,
+    specialRules: document.getElementById('specialRules').value,
+    rows,
+  };
+}
+
+function tryLoadFromStorage() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+
+function restoreState(state) {
+  document.getElementById('routeName').value    = state.routeName    || '';
+  document.getElementById('unitNo').value       = state.unitNo       || '1号機（経路①）';
+  document.getElementById('specialRules').value = state.specialRules || '';
+  document.getElementById('tableBody').innerHTML = '';
+  rowCounter = 0;
+  (state.rows || []).forEach(r => {
+    if (r.fixed === 'start' || r.fixed === 'end') addFixedRow(r.fixed, r.val, r.note);
+    else addRowWithVal(r.type, r.bSel || r.val, r.note, r.other || '');
+  });
+  renumberRows();
+}
+
+function flashSaveIndicator() {
+  const el = document.getElementById('saveIndicator');
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+/* ═══════════════════════════════════════════════════════
+   行操作
+═══════════════════════════════════════════════════════ */
+function addFixedRow(fixedType, val='', note='') {
+  const tbody = document.getElementById('tableBody');
+  const tr    = document.createElement('tr');
+  tr.className     = 'route-row fixed-row';
+  tr.dataset.fixed = fixedType;
+  rowCounter++;
+  const rowIdx = rowCounter - 1;
+  tr.dataset.rowIdx = rowIdx;
+  tr.addEventListener('click', e => { if (!e.target.closest('button')) onRowClick(tr); });
+
+  const label = fixedType === 'start' ? '起点' : '終点';
+  const ph    = fixedType === 'start' ? '例：A地点（完成出庫品置き場）' : '例：B地点（ピッキング済み置き場）';
+  tr.innerHTML = `
+    <td><span class="row-num">${rowIdx+1}</span></td>
+    <td class="type-cell">
+      <div class="type-pill">
+        <div class="type-dot" style="background:${GROUP_DOT.point};"></div>
+        <span style="font-size:12px;font-weight:600;color:var(--text);">${label}</span>
+      </div>
+    </td>
+    <td class="b-cell">
+      <input type="text" class="val-input" value="${escapeAttr(val)}" placeholder="${ph}" oninput="onChange()">
+    </td>
+    <td><input type="text" class="note-input" value="${escapeAttr(note)}" placeholder="備考" oninput="onChange()"></td>
+    <td></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+function addRow() { addRowWithVal('直進','','',''); }
+
+function addRowWithVal(type, val, note, otherVal='') {
+  const tbody  = document.getElementById('tableBody');
+  const endRow = tbody.querySelector('[data-fixed="end"]');
+  const tr     = document.createElement('tr');
+  tr.className = 'route-row';
+  rowCounter++;
+  const rowIdx = rowCounter - 1;
+  tr.dataset.rowIdx = rowIdx;
+  tr.addEventListener('click', e => { if (!e.target.closest('button')) onRowClick(tr); });
+
+  const cat   = ITEM_CATEGORIES.find(c => c.value === type) || ITEM_CATEGORIES[2];
+  const bHtml = buildBCellHtml(cat.group, val, otherVal);
+
+  tr.innerHTML = `
+    <td><span class="row-num"></span></td>
+    <td class="type-cell">
+      <div class="type-pill">
+        <div class="type-dot" style="background:${cat.dot};"></div>
+        <select class="type-select" onchange="onTypeChange(this)" oninput="onChange()" style="font-size:12px;">
+          ${ITEM_CATEGORIES.map(c=>`<option value="${c.value}"${c.value===type?' selected':''}>${c.label}</option>`).join('')}
+        </select>
+      </div>
+    </td>
+    <td class="b-cell">${bHtml}</td>
+    <td><input type="text" class="note-input" value="${escapeAttr(note)}" placeholder="可変LM名など" oninput="onChange()"></td>
+    <td><button class="btn btn-del" onclick="deleteRow(this)" title="削除">✕</button></td>
+  `;
+  tr.style.borderLeft = `3px solid ${cat.dot}`;
+
+  if (endRow) tbody.insertBefore(tr, endRow);
+  else tbody.appendChild(tr);
+
+  renumberRows();
+  onChange();
+}
+
+function buildBCellHtml(group, val, otherVal) {
+  if (group === 'corner') {
+    return `
+      <select class="b-select" oninput="onChange()">
+        ${CORNER_OPTIONS.map(o=>`<option${o===val?' selected':''}>${o}</option>`).join('')}
+      </select>
+      <input type="text" class="val-input" style="display:none;" oninput="onChange()">
+      <input type="text" class="b-other-input" style="display:none;" oninput="onChange()">
+    `;
+  } else if (group === 'special') {
+    const showOther = (val === 'その他' || otherVal !== '');
+    return `
+      <select class="b-select" onchange="onBSelectChange(this)" oninput="onChange()">
+        ${SPECIAL_OPTIONS.map(o=>`<option${o===val?' selected':''}>${o}</option>`).join('')}
+      </select>
+      <input type="text" class="val-input" style="display:none;" oninput="onChange()">
+      <input type="text" class="b-other-input${showOther?' visible':''}"
+        value="${escapeAttr(otherVal)}"
+        placeholder="内容を手入力してください" oninput="onChange()">
+    `;
+  } else {
+    const ph = group === 'straight' ? '例：16,000mm' : '例：A地点（完成出庫品置き場）';
+    return `
+      <select class="b-select" style="display:none;" oninput="onChange()"></select>
+      <input type="text" class="val-input" value="${escapeAttr(val)}" placeholder="${ph}" oninput="onChange()">
+      <input type="text" class="b-other-input" style="display:none;" oninput="onChange()">
+    `;
+  }
+}
+
+function onTypeChange(sel) {
+  const tr    = sel.closest('tr');
+  const dot   = tr.querySelector('.type-dot');
+  const cat   = ITEM_CATEGORIES.find(c => c.value === sel.value) || ITEM_CATEGORIES[2];
+  dot.style.background = cat.dot;
+  tr.style.borderLeft  = `3px solid ${cat.dot}`;
+  tr.querySelector('.b-cell').innerHTML = buildBCellHtml(cat.group, '', '');
+  onChange();
+}
+
+function onBSelectChange(sel) {
+  const other = sel.closest('tr').querySelector('.b-other-input');
+  if (!other) return;
+  if (sel.value === 'その他') { other.classList.add('visible'); other.focus(); }
+  else { other.classList.remove('visible'); other.value = ''; }
+  onChange();
+}
+
+function deleteRow(btn) {
+  btn.closest('tr').remove();
+  renumberRows();
+  onChange();
+}
+
+function renumberRows() {
+  document.querySelectorAll('#tableBody .route-row').forEach((tr, i) => {
+    tr.dataset.rowIdx = i;
+    const num = tr.querySelector('.row-num');
+    if (num) num.textContent = i + 1;
+  });
+}
+
+function clearAll() {
+  if (!confirm('入力内容をすべてクリアしますか？')) return;
+  document.getElementById('tableBody').innerHTML = '';
+  document.getElementById('routeName').value    = '';
+  document.getElementById('specialRules').value = '';
+  rowCounter = 0; activeRowIdx = -1;
+  addFixedRow('start'); addRow(); addRow(); addRow(); addFixedRow('end');
+  try { localStorage.removeItem(LS_KEY); } catch(e) {}
+  onChange();
+}
+
+/* ═══════════════════════════════════════════════════════
+   B値取得
+═══════════════════════════════════════════════════════ */
+function getBValue(tr) {
+  const bSel    = tr.querySelector('.b-select');
+  const valInput= tr.querySelector('.val-input');
+  const other   = tr.querySelector('.b-other-input');
+  if (bSel && bSel.style.display !== 'none' && bSel.offsetParent !== null) {
+    const v = bSel.value;
+    if (v === 'その他' && other && other.value.trim()) return `その他：${other.value.trim()}`;
+    return v;
+  }
+  if (valInput && valInput.style.display !== 'none') return valInput.value;
+  return '';
+}
+
+function getTypeLabel(tr) {
+  if (tr.dataset.fixed === 'start') return '起点';
+  if (tr.dataset.fixed === 'end')   return '終点';
+  const sel = tr.querySelector('.type-select');
+  return sel ? sel.value : '';
+}
+
+/* ═══════════════════════════════════════════════════════
+   updatePreview（拡張版：テキスト＋マップ更新）
+═══════════════════════════════════════════════════════ */
+function updatePreview() {
+  document.getElementById('previewOutput').textContent = buildOutputText();
+  updateStatus();
+  drawAllMaps(); // ← マルチフロアCanvas再描画
+}
+
+function buildOutputText() {
+  const routeName = document.getElementById('routeName').value || '（未入力）';
+  const unitNo    = document.getElementById('unitNo').value;
+  const special   = document.getElementById('specialRules').value || '特になし';
+  let out = `【今回のルート情報】\n■ ${routeName}\n■ 担当機体：${unitNo}\n\n`;
+  out += `| 項目 | 距離・方向・場所 | 特記事項 |\n| :--- | :--- | :--- |\n`;
+  document.querySelectorAll('#tableBody .route-row').forEach(tr => {
+    const t = getTypeLabel(tr);
+    const v = getBValue(tr);
+    const n = (tr.querySelector('.note-input')||{}).value || '';
+    if (v.trim() !== '' || tr.dataset.fixed) out += `| ${t} | ${v} | ${n} |\n`;
+  });
+  out += `\n【案件固有の特殊条件】\n${special}\n`;
+  return out;
+}
+
+function updateStatus() {
+  const rows = document.querySelectorAll('#tableBody tr.route-row:not([data-fixed])');
+  let turns=0, ev=0, stops=0, totalDist=0;
+  rows.forEach(tr => {
+    const t = (tr.querySelector('.type-select')||{}).value||'';
+    if (t === 'コーナー・旋回') turns++;
+    if (t === '停止・連携・特殊') { const bv=getBValue(tr); if(bv.includes('EV'))ev++; else stops++; }
+    if (t === '直進') { const m=getBValue(tr).replace(/,/g,'').match(/(\d+)/); if(m)totalDist+=parseInt(m[1]); }
+  });
+  document.getElementById('statRows').textContent  = `${rows.length} 行`;
+  document.getElementById('statTurns').textContent = `旋回 ${turns}`;
+  document.getElementById('statEV').textContent    = `EV ${ev}`;
+  document.getElementById('statStop').textContent  = `停止 ${stops}`;
+  document.getElementById('statDist').textContent  = totalDist > 0 ? `直進合計 ${totalDist.toLocaleString()}mm` : '';
+}
+
+/* ═══════════════════════════════════════════════════════
+   コピー・トースト
+═══════════════════════════════════════════════════════ */
+function generateAndCopy() {
+  const text = buildOutputText();
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(()=>showToast('✓ コピー完了！Claudeに貼り付けてください')).catch(()=>fallbackCopy(text));
+  } else { fallbackCopy(text); }
+}
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.cssText='position:fixed;opacity:0;top:0;left:0;';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); showToast('✓ コピー完了！'); }
+  catch(e) { showToast('コピーに失敗しました','error'); }
+  document.body.removeChild(ta);
+}
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast ${type}`;
+  clearTimeout(t._timer);
+  setTimeout(()=>t.classList.add('show'),10);
+  t._timer = setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+/* ═══════════════════════════════════════════════════════
+   テンプレート
+═══════════════════════════════════════════════════════ */
+const TEMPLATES = {
+  route1_fwd: {
+    name:'パターン① 往路 D→EV→A（1号機）', unit:'1号機（経路①）',
+    special:'- EV入口1.5m手前：可変（一時停止）→開扉要求送信\n- EVから「開」信号受信後：2m前進→停止（可変J EV連携）\n- EV退出：3.5mバック→左Uターン→扉閉めトリガー送信',
+    rows:[
+      {fixed:'start',val:'D点（5工場3F 完成出庫品置き場）',note:'固定一時停止'},
+      {type:'直進',val:'16,000mm',note:'可変A 直進3km/h'},
+      {type:'コーナー・旋回',val:'右旋回',note:'可変B 右旋回①'},
+      {type:'直進',val:'10,000mm',note:'固定直進2→可変C→固定直進3'},
+      {type:'コーナー・旋回',val:'左旋回',note:'固定 左旋回②'},
+      {type:'直進',val:'50,000mm',note:'可変D・E・F 直進3km/h'},
+      {type:'コーナー・旋回',val:'右旋回',note:'固定 右旋回③'},
+      {type:'直進',val:'20,000mm',note:'可変G 直進3km/h'},
+      {type:'コーナー・旋回',val:'左旋回',note:'固定 左旋回④'},
+      {type:'直進',val:'28,000mm',note:'可変H・I 直進→直進1km/h'},
+      {type:'停止・連携・特殊',val:'EV乗り込み',note:'可変J EV連携アクション'},
+      {type:'コーナー・旋回',val:'左Uターン',note:'EV連携内包'},
+      {type:'直進',val:'8,000mm',note:'可変K 直進3km/h'},
+      {type:'コーナー・旋回',val:'右旋回',note:'固定 右旋回⑥'},
+      {type:'直進',val:'8,000mm',note:'固定直進2'},
+      {type:'コーナー・旋回',val:'左旋回',note:'固定 左旋回⑦'},
+      {type:'直進',val:'10,000mm',note:'可変L 直進3km/h'},
+      {type:'コーナー・旋回',val:'右旋回',note:'固定 右旋回⑧'},
+      {type:'直進',val:'11,000mm',note:'固定直進2'},
+      {type:'コーナー・旋回',val:'左旋回',note:'固定 左旋回⑨'},
+      {type:'直進',val:'25,000mm',note:'可変K 直進3km/h'},
+      {type:'コーナー・旋回',val:'右旋回',note:'固定 右旋回⑩'},
+      {type:'直進',val:'7,000mm',note:'直進1km/h（A点接近）'},
+      {fixed:'end',val:'A点（3工場2F 完成出庫品置き場）',note:'固定一時停止'},
+    ]
+  },
+  route1_ret: {
+    name:'パターン① 復路 A→EV→D（1号機）', unit:'1号機（経路①）',
+    special:'- 復路EV連携（2F→3F）：可変K1 EV連携アクション\n- EV退出後：左Uターン→通常動線復帰',
+    rows:[
+      {fixed:'start',val:'A点（3工場2F 完成出庫品置き場）',note:'固定一時停止'},
+      {type:'直進',val:'7,000mm',note:'直進3km/h'},
+      {type:'コーナー・旋回',val:'左旋回',note:'固定 左旋回'},
+      {type:'直進',val:'25,000mm',note:'直進3km/h'},
+      {type:'コーナー・旋回',val:'左旋回',note:'固定 左旋回'},
+      {type:'直進',val:'11,000mm',note:'直進3km/h'},
+      {type:'コーナー・旋回',val:'右旋回',note:'固定 右旋回'},
+      {type:'直進',val:'10,000mm',note:'直進3km/h'},
+      {type:'コーナー・旋回',val:'左旋回',note:'固定 左旋回'},
+      {type:'直進',val:'8,000mm',note:'直進3km/h'},
+      {type:'コーナー・旋回',val:'右旋回',note:'固定 右旋回'},
+      {type:'直進',val:'8,000mm',note:'直進1km/h（EV接近）'},
+      {type:'停止・連携・特殊',val:'EV乗り込み',note:'可変K1 EV連携アクション'},
+      {type:'直進',val:'28,000mm',note:'直進3km/h'},
+      {type:'コーナー・旋回',val:'右旋回',note:'固定 右旋回'},
+      {type:'直進',val:'20,000mm',note:'直進3km/h'},
+      {type:'コーナー・旋回',val:'左旋回',note:'固定 左旋回'},
+      {type:'直進',val:'50,000mm',note:'直進3km/h'},
+      {type:'コーナー・旋回',val:'右旋回',note:'固定 右旋回'},
+      {type:'直進',val:'10,000mm',note:'直進3km/h'},
+      {type:'コーナー・旋回',val:'左旋回',note:'固定 左旋回'},
+      {type:'直進',val:'16,000mm',note:'直進1km/h（D点接近）'},
+      {fixed:'end',val:'D点（5工場3F 完成出庫品置き場）',note:'固定一時停止'},
+    ]
+  },
+  route2_fwd: {
+    name:'パターン② 往路 C→EV→B（2号機）', unit:'2号機（経路②）',
+    special:'- EV連携：可変O2 EV連携アクション（3F→2F）\n- EV退出後：左Uターン→通常動線復帰',
+    rows:[
+      {fixed:'start',val:'C点（5工場3F 使用前部品置き場）',note:'固定一時停止'},
+      {type:'直進',val:'13,000mm',note:'可変V 直進3km/h'},
+      {type:'コーナー・旋回',val:'左旋回',note:'固定 左旋回①'},
+      {type:'直進',val:'20,000mm',note:'可変W 直進3km/h'},
+      {type:'コーナー・旋回',val:'右旋回',note:'固定 右旋回②'},
+      {type:'直進',val:'50,000mm',note:'可変X・Y・Z 直進3km/h'},
+      {type:'コーナー・旋回',val:'左旋回',note:'固定 左旋回③'},
+      {type:'直進',val:'28,000mm',note:'可変A1・B1 直進1km/h'},
+      {type:'停止・連携・特殊',val:'EV乗り込み',note:'可変O2 EV連携アクション'},
+      {type:'コーナー・旋回',val:'左Uターン',note:'EV連携内包'},
+      {type:'直進',val:'8,000mm',note:'可変D1 直進3km/h'},
+      {type:'コーナー・旋回',val:'右旋回',note:'固定 右旋回④'},
+      {type:'直進',val:'8,000mm',note:'固定直進2'},
+      {type:'コーナー・旋回',val:'左旋回',note:'固定 左旋回⑤'},
+      {type:'直進',val:'10,000mm',note:'可変E1 直進3km/h'},
+      {type:'コーナー・旋回',val:'右旋回',note:'固定 右旋回⑥'},
+      {type:'直進',val:'58,000mm',note:'可変F1〜K1 直進3km/h'},
+      {type:'コーナー・旋回',val:'左旋回',note:'固定 左旋回⑦'},
+      {type:'直進',val:'60,000mm',note:'可変L1〜M1 直進3km/h'},
+      {type:'コーナー・旋回',val:'右旋回',note:'固定 右旋回⑧'},
+      {type:'直進',val:'8,000mm',note:'可変N1 直進1km/h（B点接近）'},
+      {fixed:'end',val:'B点（3工場2F ピッキング済み置き場）',note:'固定一時停止'},
+    ]
+  },
+  route2_ret: {
+    name:'パターン② 復路 B→EV→C（2号機）', unit:'2号機（経路②）',
+    special:'- 復路EV連携（2F→3F）：可変S3 EV連携アクション\n- EV退出後：左Uターン→通常動線復帰',
+    rows:[
+      {fixed:'start',val:'B点（3工場2F ピッキング済み置き場）',note:'固定一時停止'},
+      {type:'直進',val:'8,000mm',note:'直進3km/h'},
+      {type:'コーナー・旋回',val:'左旋回',note:'固定 左旋回'},
+      {type:'直進',val:'60,000mm',note:'直進3km/h'},
+      {type:'コーナー・旋回',val:'右旋回',note:'固定 右旋回'},
+      {type:'直進',val:'58,000mm',note:'直進3km/h'},
+      {type:'コーナー・旋回',val:'左旋回',note:'固定 左旋回'},
+      {type:'直進',val:'10,000mm',note:'直進3km/h'},
+      {type:'コーナー・旋回',val:'右旋回',note:'固定 右旋回'},
+      {type:'直進',val:'8,000mm',note:'直進3km/h'},
+      {type:'コーナー・旋回',val:'左旋回',note:'固定 左旋回'},
+      {type:'直進',val:'8,000mm',note:'直進1km/h（EV接近）'},
+      {type:'停止・連携・特殊',val:'EV乗り込み',note:'可変S3 EV連携アクション'},
+      {type:'直進',val:'28,000mm',note:'直進3km/h'},
+      {type:'コーナー・旋回',val:'右旋回',note:'固定 右旋回'},
+      {type:'直進',val:'50,000mm',note:'直進3km/h'},
+      {type:'コーナー・旋回',val:'左旋回',note:'固定 左旋回'},
+      {type:'直進',val:'20,000mm',note:'直進3km/h'},
+      {type:'コーナー・旋回',val:'右旋回',note:'固定 右旋回'},
+      {type:'直進',val:'13,000mm',note:'直進1km/h（C点接近）'},
+      {fixed:'end',val:'C点（5工場3F 使用前部品置き場）',note:'固定一時停止'},
+    ]
+  }
+};
+
+function loadTemplate(key) {
+  const tmpl = TEMPLATES[key]; if (!tmpl) return;
+  document.getElementById('routeName').value    = tmpl.name;
+  document.getElementById('unitNo').value       = tmpl.unit;
+  document.getElementById('specialRules').value = tmpl.special;
+  document.getElementById('tableBody').innerHTML = '';
+  rowCounter = 0; activeRowIdx = -1;
+  tmpl.rows.forEach(r => {
+    if (r.fixed==='start') addFixedRow('start',r.val,r.note);
+    else if (r.fixed==='end') addFixedRow('end',r.val,r.note);
+    else addRowWithVal(r.type,r.val,r.note,'');
+  });
+  renumberRows();
+  onChange();
+  showToast(`✓ テンプレート「${tmpl.name}」を読み込みました`);
+}
+
+/* ═══════════════════════════════════════════════════════
+   ユーティリティ
+═══════════════════════════════════════════════════════ */
+function escapeAttr(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ═══════════════════════════════════════════════════════
+   起動
+═══════════════════════════════════════════════════════ */
+function init() {
+  const saved = tryLoadFromStorage();
+  if (saved) { restoreState(saved); showToast('💾 前回の入力データを復元しました','info'); }
+  else {
+    addFixedRow('start','D点（5工場3F 完成出庫品置き場）','固定一時停止');
+    addRow(); addRow(); addRow();
+    addFixedRow('end','A点（3工場2F 完成出庫品置き場）','固定一時停止');
+  }
+  updatePreview();
+}
+init();
+</script>
+</body>
+</html>
