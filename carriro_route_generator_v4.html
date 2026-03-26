@@ -45,7 +45,7 @@ select option { background-color: #1e2530; color: #e6edf3; }
 .save-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); }
 
 /* ── レイアウト ── */
-.main { max-width: 1300px; margin: 0 auto; padding: 20px 18px; display: grid; grid-template-columns: 1fr 420px; gap: 18px; align-items: start; }
+.main { max-width: 1400px; margin: 0 auto; padding: 20px 18px; display: grid; grid-template-columns: 1fr 460px; gap: 18px; align-items: start; }
 
 /* ── カード ── */
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
@@ -63,12 +63,13 @@ select option { background-color: #1e2530; color: #e6edf3; }
 
 /* ── テーブル ── */
 .route-table-wrap { overflow-x: auto; margin-bottom: 12px; }
-.route-table { width: 100%; border-collapse: separate; border-spacing: 0 3px; font-size: 13px; }
-.route-table thead tr th { padding: 7px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); text-align: left; background: var(--bg); border-bottom: 1px solid var(--border); }
+.route-table { width: 100%; border-collapse: separate; border-spacing: 0 3px; font-size: 13px; table-layout: fixed; }
+.route-table thead tr th { padding: 7px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); text-align: left; background: var(--bg); border-bottom: 1px solid var(--border); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.route-table td { overflow: hidden; }
 .route-row { background: var(--surface2); transition: background .1s; cursor: pointer; }
 .route-row:hover { background: #21262d; }
 .route-row.active-row { background: rgba(47,129,247,.12) !important; }
-.route-row td { padding: 5px 6px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); vertical-align: middle; }
+.route-row td { padding: 0 6px; height: 36px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); vertical-align: middle; }
 .route-row td:first-child { border-left: 1px solid var(--border); border-radius: 6px 0 0 6px; width: 30px; text-align: center; }
 .route-row td:last-child { border-right: 1px solid var(--border); border-radius: 0 6px 6px 0; width: 36px; text-align: center; }
 .route-row.fixed-row { background: rgba(47,129,247,.05); }
@@ -77,13 +78,38 @@ select option { background-color: #1e2530; color: #e6edf3; }
 .route-row td.type-cell { padding: 5px 7px; width: 112px; }
 .type-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; width: 100%; }
 .type-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.route-table input, .route-table select { width: 100%; background: transparent; border: none; color: var(--text); font-family: 'Noto Sans JP', sans-serif; font-size: 13px; padding: 4px 2px; outline: none; transition: background .1s; border-radius: 4px; }
+.route-table input, .route-table select { width: 100%; background: transparent; border: none; color: var(--text); font-family: 'Noto Sans JP', sans-serif; font-size: 13px; padding: 0 2px; outline: none; transition: background .1s; border-radius: 4px; height: 28px; line-height: 28px; vertical-align: middle; display: block; box-sizing: border-box; text-align: center; }
 .route-table input:focus, .route-table select:focus { background: rgba(47,129,247,.08); outline: 2px solid var(--accent); outline-offset: -1px; }
 .route-table select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%237d8590'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 3px center; padding-right: 14px; appearance: none; -webkit-appearance: none; cursor: pointer; }
 .b-other-input { display: none; margin-top: 4px; width: 100%; background: rgba(47,129,247,.06); border: 1px solid rgba(47,129,247,.25); border-radius: 4px; color: var(--text); font-family: 'Noto Sans JP', sans-serif; font-size: 12px; padding: 3px 6px; outline: none; }
 .b-other-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(47,129,247,.15); }
 .b-other-input.visible { display: block; }
-.route-row td.b-cell { vertical-align: top; padding-top: 6px; }
+.route-row td.b-cell { vertical-align: middle; padding: 0 6px; }
+
+/* ── mm サフィックス表示ラッパー ── */
+.mm-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  height: 28px;
+}
+.mm-wrap input {
+  flex: 1;
+  min-width: 0;
+}
+.mm-suffix {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  display: none;
+  padding-left: 2px;
+  flex-shrink: 0;
+}
+.mm-suffix.show { display: block; }
 
 /* ── ボタン ── */
 .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: none; border-radius: 6px; font-family: 'Noto Sans JP', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; white-space: nowrap; }
@@ -154,12 +180,17 @@ select option { background-color: #1e2530; color: #e6edf3; }
 .map-wrap {
   position: relative;
   background: #090d13;
-  overflow: hidden;
+  overflow: auto;
+  max-height: 520px;
+  display: block;
 }
+/* FIT時は中央、ズーム時は左端基点でスクロール可能にする */
 .map-wrap canvas {
   display: block;
-  width: 100%;
+  margin: 0 auto; /* 親より小さい時は中央寄せ */
 }
+/* ズーム時は canvas が自然サイズで表示されるよう width:auto */
+
 
 /* 旧 #routeCanvas（後方互換） */
 #routeCanvas { display: block; width: 100%; }
@@ -209,6 +240,31 @@ select option { background-color: #1e2530; color: #e6edf3; }
   .main { grid-template-columns: 1fr; }
   .preview-panel { position: static; }
 }
+
+/* ── PDF印刷用スタイル ── */
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  body { background: #0d1117 !important; }
+  .header { position: static !important; }
+  .btn-pdf, .btn-map, .btn-add, .btn-del, .btn-clear, .btn-copy,
+  .map-controls, .map-legend, .section-divider,
+  .card:has(#previewOutput), .card:last-child { display: none !important; }
+  .main { display: block !important; max-width: 100% !important; padding: 0 !important; }
+  .left-col, .preview-panel { display: block !important; width: 100% !important; }
+  .preview-panel { position: static !important; }
+  .card { border-radius: 0 !important; page-break-inside: avoid; margin-bottom: 8px !important; }
+  .map-wrap { max-height: none !important; overflow: visible !important; }
+  .map-wrap canvas { display: block; margin: 0 auto; max-width: 100%; height: auto !important; }
+  .status-bar { display: none !important; }
+  .floor-label-bar .btn-map { display: none !important; }
+  .floor-label-bar { page-break-after: avoid; }
+  #mapPanels { page-break-inside: avoid; }
+  .ev-connector { page-break-inside: avoid; }
+  .route-table-wrap { overflow: visible !important; }
+  .route-table { font-size: 11px !important; }
+  .guide-grid { display: none !important; }
+  .form-textarea { min-height: unset !important; resize: none !important; }
+}
 </style>
 </head>
 <body>
@@ -220,7 +276,10 @@ select option { background-color: #1e2530; color: #e6edf3; }
     <div class="save-indicator" id="saveIndicator">
       <div class="save-dot"></div><span>自動保存済み</span>
     </div>
-    <span class="header-badge">v4.0</span>
+    <button class="btn btn-pdf" onclick="exportPDF()" title="現在の内容をPDFに保存" style="background:rgba(247,129,102,.15);color:#f78166;border:1px solid rgba(247,129,102,.35);font-size:11px;padding:4px 10px;gap:5px;">
+      📄 PDF保存
+    </button>
+    <span class="header-badge">v5.0</span>
   </div>
 </header>
 
@@ -274,9 +333,9 @@ select option { background-color: #1e2530; color: #e6edf3; }
             <thead>
               <tr>
                 <th style="width:28px;">#</th>
-                <th style="width:115px;">項目</th>
-                <th>距離・方向・場所</th>
-                <th style="width:170px;">特記事項</th>
+                <th style="width:100px;">項目</th>
+                <th style="width:150px;">距離・方向・場所</th>
+                <th style="width:150px;">特記事項</th>
                 <th style="width:32px;"></th>
               </tr>
             </thead>
@@ -316,13 +375,10 @@ select option { background-color: #1e2530; color: #e6edf3; }
       <div class="card-header">
         <span>📐</span><h2>動線マップ（リアルタイム）</h2>
         <div style="margin-left:auto; display:flex; gap:6px; align-items:center;">
-          <span id="rotateLabel" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#484f58;min-width:28px;text-align:right;">0°</span>
-          <button class="btn-map" onclick="mapRotate(-90)" title="左に90°回転">↺</button>
-          <button class="btn-map" onclick="mapRotate(90)"  title="右に90°回転">↻</button>
+          <button class="btn-map" onclick="mapRotate(-90)" title="全フロア左に90°回転">↺ 全体</button>
+          <button class="btn-map" onclick="mapRotate(90)"  title="全フロア右に90°回転">↻ 全体</button>
           <div style="width:1px;height:14px;background:#30363d;margin:0 2px;"></div>
-          <button class="btn-map" onclick="mapZoom(1.2)" title="拡大">＋</button>
-          <button class="btn-map" onclick="mapZoom(1/1.2)" title="縮小">－</button>
-          <button class="btn-map" onclick="mapFit()" title="全体表示・回転リセット">⊡ FIT</button>
+          <button class="btn-map" onclick="mapFit()" title="全フロアFIT・回転リセット">⊡ 全体FIT</button>
         </div>
       </div>
 
@@ -339,6 +395,7 @@ select option { background-color: #1e2530; color: #e6edf3; }
         <div class="map-legend-item"><div class="map-legend-dot" style="background:#ffa657;"></div><span>停止/特殊</span></div>
         <div class="map-legend-item"><div class="map-legend-dot" style="background:#f78166;"></div><span>EV乗込</span></div>
         <div class="map-legend-item"><div class="map-legend-dot" style="background:#79c0ff;"></div><span>EV退出</span></div>
+        <div class="map-legend-item"><div style="width:16px;border-top:2px dashed rgba(160,160,160,0.65);margin-top:1px;"></div><span>特記事項動作区間</span></div>
         <div class="map-legend-item"><div class="map-legend-line" style="background:#2f81f7; height:3px;"></div><span>編集中</span></div>
         <div class="map-legend-item"><div class="map-legend-dot" style="background:#2f81f7;width:10px;height:10px;border-radius:50%;"></div><span>起/終点</span></div>
       </div>
@@ -398,8 +455,8 @@ let activeRowIdx = -1;   // 強調表示する行インデックス
    ─── CANVAS 動線マップ（マルチフロア対応） ───────────
 ═══════════════════════════════════════════════════════ */
 const CV_W = 400;
-let cvScale  = 1.0;
-let cvRotate = 0;
+let floorScales  = [];   // フロアごとの独立ズーム倍率
+let floorRotates = [];   // フロアごとの独立回転角（度）
 
 const FLOOR_COLORS = ['#1f6feb','#238636','#9a3412','#7c3aed','#b45309','#0e7490','#be185d','#374151'];
 
@@ -461,19 +518,48 @@ function buildPoints(segs, initAngle = 0) {
   let x = 0, y = 0, ang = initAngle;
   const stSeg = segs.find(s => s.fixed === 'start');
   pts.push({ x, y, idx: stSeg ? stSeg.idx : -1, type:'start', note: stSeg ? (stSeg.val||'') : '' });
+
+  // EV乗り込み・退出のインデックスを事前収集
+  const evBoardIdxSet = new Set();
+  const evExitIdxSet  = new Set();
   segs.forEach(seg => {
+    if (seg.type === '停止・連携・特殊') {
+      if (isEvBoard(seg.val))  evBoardIdxSet.add(seg.idx);
+      if (isEvExit(seg.val) || seg._evExit) evExitIdxSet.add(seg.idx);
+    }
+  });
+
+  // EVアクション区間を判定するためのウィンドウ（乗り込み前1行・退出後1行）
+  const evBoardSegIdxs = segs.map((s,i)=>isEvBoard(s.val)?i:-1).filter(i=>i>=0);
+  const evExitSegIdxs  = segs.map((s,i)=>(isEvExit(s.val)||s._evExit)?i:-1).filter(i=>i>=0);
+  // 乗り込みの直前セグ・直後セグ（EV内動作）
+  const evActionSegSet = new Set();
+  evBoardSegIdxs.forEach(bi => {
+    if (bi-1 >= 0) evActionSegSet.add(segs[bi-1].idx); // 乗り込み前（進入直進）
+    evActionSegSet.add(segs[bi].idx);                   // 乗り込み自体
+  });
+  evExitSegIdxs.forEach(ei => {
+    evActionSegSet.add(segs[ei].idx);                   // 退出自体
+    if (ei+1 < segs.length) evActionSegSet.add(segs[ei+1].idx); // 退出後（Uターン等）
+    if (ei+2 < segs.length) evActionSegSet.add(segs[ei+2].idx); // 退出後2行目
+  });
+
+  segs.forEach(seg => {
+    const isEVZone = evActionSegSet.has(seg.idx);
     if (seg.fixed === 'start') { pts[0].note = seg.val||''; return; }
     if (seg.type === '直進') {
       const mm = parseMm(seg.val) || 10000, d = mm * PX;
       const nx = x + d*Math.sin(ang*RAD), ny = y + d*Math.cos(ang*RAD);
-      pts.push({ x:nx, y:ny, idx:seg.idx, type:'straight', note:seg.note, dist:mm, fromX:x, fromY:y });
+      pts.push({ x:nx, y:ny, idx:seg.idx, type:'straight', note:seg.note, dist:mm, fromX:x, fromY:y,
+                 evZone: isEVZone });
       x=nx; y=ny;
     } else if (seg.type === 'コーナー・旋回') {
       const da = turnAngleDeg(seg.val); ang += da;
-      pts.push({ x, y, idx:seg.idx, type:'corner', note:seg.note, val:seg.val, delta:da });
+      pts.push({ x, y, idx:seg.idx, type:'corner', note:seg.note, val:seg.val, delta:da,
+                 evZone: isEVZone });
     } else if (seg.type === '停止・連携・特殊') {
       const t = seg._evExit ? 'ev_exit' : isEvBoard(seg.val) ? 'ev_board' : 'stop';
-      pts.push({ x, y, idx:seg.idx, type:t, note:seg.note, val:seg.val });
+      pts.push({ x, y, idx:seg.idx, type:t, note:seg.note, val:seg.val, evZone: isEVZone });
     } else if (seg.fixed === 'end') {
       pts.push({ x, y, idx:seg.idx, type:'endpoint', note:seg.val||'' });
     }
@@ -481,8 +567,8 @@ function buildPoints(segs, initAngle = 0) {
   return { pts, finalAngle: ang };
 }
 
-function drawFloorCanvas(canvas, pts, floorColor) {
-  const rad = cvRotate*Math.PI/180, cosR=Math.cos(rad), sinR=Math.sin(rad);
+function drawFloorCanvas(canvas, pts, floorColor, sc, floorRotate) {
+  const rad = (floorRotate||0)*Math.PI/180, cosR=Math.cos(rad), sinR=Math.sin(rad);
   const rot = (x,y) => ({ x:x*cosR-y*sinR, y:x*sinR+y*cosR });
   const rp  = pts.map(p => {
     const r = rot(p.x,p.y), b = {...p, x:r.x, y:r.y};
@@ -490,22 +576,61 @@ function drawFloorCanvas(canvas, pts, floorColor) {
     return b;
   });
   const xs=rp.map(p=>p.x), ys=rp.map(p=>p.y);
-  const minX=Math.min(...xs)-24, maxX=Math.max(...xs)+24;
-  const minY=Math.min(...ys)-24, maxY=Math.max(...ys)+24;
+  const minX=Math.min(...xs)-40, maxX=Math.max(...xs)+40;
+  const minY=Math.min(...ys)-28, maxY=Math.max(...ys)+28;
   const dW=maxX-minX||1, dH=maxY-minY||1;
-  const wW=canvas.parentElement.clientWidth||400;
-  const sc=Math.min((wW-4)/dW, 440/dH)*cvScale;
-  const cW=Math.ceil(dW*sc)+4, cH=Math.ceil(dH*sc)+4;
-  canvas.width=cW; canvas.height=cH; canvas.style.height=cH+'px';
+
+  // 親の実際の幅を取得
+  const wrapEl = canvas.parentElement;
+  const wW = wrapEl ? wrapEl.clientWidth : 440;
+
+  // baseSc: zoom=1 のときちょうど親幅に収まるスケール
+  const baseSc = Math.min(wW / dW, (wW * 0.75) / dH);
+  const drawSc = baseSc * sc;
+
+  const cW = Math.ceil(dW * drawSc) + 4;
+  const cH = Math.ceil(dH * drawSc) + 4;
+
+  // canvas の物理ピクセルサイズと CSS サイズを一致させる（CSSによる縮小を防ぐ）
+  canvas.width        = cW;
+  canvas.height       = cH;
+  canvas.style.width  = cW + 'px';
+  canvas.style.height = cH + 'px';
+
   const ctx=canvas.getContext('2d');
   ctx.clearRect(0,0,cW,cH);
-  const tx=lx=>(lx-minX)*sc+2, ty=ly=>(ly-minY)*sc+2;
+  const tx=lx=>(lx-minX)*drawSc+2, ty=ly=>(ly-minY)*drawSc+2;
   ctx.strokeStyle='rgba(255,255,255,0.04)'; ctx.lineWidth=0.5;
   for(let g=Math.floor(minX/50)*50;g<=maxX;g+=50){ ctx.beginPath();ctx.moveTo(tx(g),0);ctx.lineTo(tx(g),cH);ctx.stroke(); }
   for(let g=Math.floor(minY/50)*50;g<=maxY;g+=50){ ctx.beginPath();ctx.moveTo(0,ty(g));ctx.lineTo(cW,ty(g));ctx.stroke(); }
   rp.forEach(p => {
     if (p.type!=='straight') return;
-    const act = p.idx===activeRowIdx;
+    const act    = p.idx===activeRowIdx;
+    const evZone = p.evZone === true;
+
+    // ── EV特記事項区間：グレー点線 ──
+    if (evZone && !act) {
+      ctx.save();
+      ctx.beginPath();ctx.moveTo(tx(p.fromX),ty(p.fromY));ctx.lineTo(tx(p.x),ty(p.y));
+      ctx.strokeStyle='rgba(160,160,160,0.55)';
+      ctx.lineWidth=2;
+      ctx.setLineDash([4,4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+      // グレー点線区間のラベル
+      const mx2=(tx(p.fromX)+tx(p.x))/2, my2=(ty(p.fromY)+ty(p.y))/2;
+      const dx2=tx(p.x)-tx(p.fromX), dy2=ty(p.y)-ty(p.fromY), len2=Math.sqrt(dx2*dx2+dy2*dy2);
+      if(len2>20){
+        const lb2=p.dist>=1000?`${(p.dist/1000).toFixed(1)}m`:`${p.dist}mm`;
+        ctx.save();ctx.translate(mx2,my2);
+        if(Math.abs(dy2)>Math.abs(dx2)) drawLabel(ctx,lb2,'',14,-6,'#888888',false,sc);
+        else                             drawLabel(ctx,lb2,'',0,-17,'#888888',false,sc);
+        ctx.restore();
+      }
+      return; // 通常描画をスキップ
+    }
+
     if(act){ctx.save();ctx.shadowColor='#2f81f7';ctx.shadowBlur=12;}
     ctx.beginPath();ctx.moveTo(tx(p.fromX),ty(p.fromY));ctx.lineTo(tx(p.x),ty(p.y));
     ctx.strokeStyle=act?'#2f81f7':'#3fb950';ctx.lineWidth=act?4:2.5;
@@ -514,42 +639,61 @@ function drawFloorCanvas(canvas, pts, floorColor) {
     const mx=(tx(p.fromX)+tx(p.x))/2,my=(ty(p.fromY)+ty(p.y))/2;
     const dx=tx(p.x)-tx(p.fromX),dy=ty(p.y)-ty(p.fromY),len=Math.sqrt(dx*dx+dy*dy);
     if(len>28){
-      const lb=p.dist>=1000?`${(p.dist/1000).toFixed(0)}m`:`${p.dist}mm`;
-      const nt=p.note?p.note.slice(0,8)+(p.note.length>8?'...':''):'';
+      const lb=p.dist>=1000?`${(p.dist/1000).toFixed(1)}m`:`${p.dist}mm`;
+      // ズーム倍率が高いほど特記事項を長く表示（sc>=3 でフル表示）
+      const maxNoteChars = sc >= 2 ? 30 : sc >= 1.2 ? 18 : 10;
+      const nt=p.note?p.note.slice(0,maxNoteChars)+(p.note.length>maxNoteChars?'…':''):'';
       ctx.save();ctx.translate(mx,my);
-      if(Math.abs(dy)>Math.abs(dx)) drawLabel(ctx,lb,nt,12,-6,act?'#2f81f7':'#3fb950',act);
-      else                           drawLabel(ctx,lb,nt,0,-19,act?'#2f81f7':'#3fb950',act);
+      if(Math.abs(dy)>Math.abs(dx)) drawLabel(ctx,lb,nt,12,-6,act?'#2f81f7':'#3fb950',act,sc);
+      else                           drawLabel(ctx,lb,nt,0,-19,act?'#2f81f7':'#3fb950',act,sc);
       ctx.restore();
     }
   });
   rp.forEach(p => {
     const cx=tx(p.x),cy=ty(p.y),act=p.idx===activeRowIdx;
     if(p.type==='straight') return;
+    // ノード・フォントは画面上の固定サイズ（ズーム非依存）で見やすさを維持
+    const ns = 1.0;
     if(p.type==='corner'){
-      const r=act?9:6;
+      const r=Math.round((act?9:6)*ns);
       ctx.save();if(act){ctx.shadowColor='#d2a8ff';ctx.shadowBlur=10;}
       ctx.beginPath();ctx.moveTo(cx,cy-r);ctx.lineTo(cx+r,cy);ctx.lineTo(cx,cy+r);ctx.lineTo(cx-r,cy);ctx.closePath();
       ctx.fillStyle=act?'#d2a8ff':'#9060b0';ctx.fill();ctx.restore();
       const al=p.val?p.val.replace('旋回','').replace('カーブ',''):'';
-      if(al){ctx.fillStyle=act?'#e6edf3':'#9d6ac0';ctx.font=`bold ${act?11:9}px 'Noto Sans JP',sans-serif`;ctx.textAlign='left';ctx.fillText(al,cx+(act?11:8),cy+4);}
+      if(al){
+        const fs=10; // 固定フォントサイズ
+        ctx.fillStyle=act?'#e6edf3':'#9d6ac0';
+        ctx.font=`bold ${fs}px 'Noto Sans JP',sans-serif`;
+        ctx.textAlign='left';
+        ctx.fillText(al,cx+(r+3),cy+4);
+      }
     } else if(p.type==='stop'){
-      drawCircleNode(ctx,cx,cy,act?8:5,'#ffa657',act,p.val||'停止');
+      const r=Math.round((act?8:5)*ns);
+      drawCircleNodeScaled(ctx,cx,cy,r,'#ffa657',act,p.val||'停止',false,ns);
     } else if(p.type==='ev_board'){
-      const r=act?11:8;
+      const r=Math.round((act?11:8)*ns);
       ctx.save();if(act){ctx.shadowColor='#f78166';ctx.shadowBlur=12;}
       ctx.beginPath();ctx.moveTo(cx,cy-r);ctx.lineTo(cx+r,cy);ctx.lineTo(cx,cy+r);ctx.lineTo(cx-r,cy);ctx.closePath();
       ctx.fillStyle=act?'#f78166':'#c0522a';ctx.fill();ctx.restore();
-      ctx.fillStyle='#e6edf3';ctx.font="bold 8px 'JetBrains Mono',monospace";ctx.textAlign='center';ctx.fillText('EV+',cx,cy-r-4);
+      const fs=9; // 固定フォントサイズ
+      ctx.fillStyle='#e6edf3';ctx.font=`bold ${fs}px 'JetBrains Mono',monospace`;ctx.textAlign='center';ctx.fillText('EV乗込',cx,cy-r-4);
+      ctx.save();ctx.beginPath();ctx.arc(cx,cy,r+6,0,Math.PI*2);
+      ctx.strokeStyle='rgba(160,160,160,0.5)';ctx.lineWidth=1.2;ctx.setLineDash([3,3]);ctx.stroke();
+      ctx.setLineDash([]);ctx.restore();
     } else if(p.type==='ev_exit'){
-      const r=act?11:8;
+      const r=Math.round((act?11:8)*ns);
       ctx.save();if(act){ctx.shadowColor='#79c0ff';ctx.shadowBlur=12;}
       ctx.beginPath();ctx.moveTo(cx,cy-r);ctx.lineTo(cx+r,cy);ctx.lineTo(cx,cy+r);ctx.lineTo(cx-r,cy);ctx.closePath();
       ctx.fillStyle=act?'#79c0ff':'#1a6090';ctx.fill();ctx.restore();
-      ctx.fillStyle='#e6edf3';ctx.font="bold 8px 'JetBrains Mono',monospace";ctx.textAlign='center';ctx.fillText('EV-',cx,cy-r-4);
+      const fs=9; // 固定フォントサイズ
+      ctx.fillStyle='#e6edf3';ctx.font=`bold ${fs}px 'JetBrains Mono',monospace`;ctx.textAlign='center';ctx.fillText('EV退出',cx,cy-r-4);
+      ctx.save();ctx.beginPath();ctx.arc(cx,cy,r+6,0,Math.PI*2);
+      ctx.strokeStyle='rgba(160,160,160,0.5)';ctx.lineWidth=1.2;ctx.setLineDash([3,3]);ctx.stroke();
+      ctx.setLineDash([]);ctx.restore();
     } else if(p.type==='start'){
-      drawCircleNode(ctx,cx,cy,10,floorColor,false,p.note?p.note.slice(0,4):'ST',true);
+      drawCircleNodeScaled(ctx,cx,cy,Math.round(10*ns),floorColor,false,p.note?p.note.slice(0,6):'ST',true,ns);
     } else if(p.type==='endpoint'){
-      drawCircleNode(ctx,cx,cy,10,floorColor,false,p.note?p.note.slice(0,4):'GL',true);
+      drawCircleNodeScaled(ctx,cx,cy,Math.round(10*ns),floorColor,false,p.note?p.note.slice(0,6):'GL',true,ns);
     }
   });
   rp.forEach(p=>{
@@ -560,18 +704,52 @@ function drawFloorCanvas(canvas, pts, floorColor) {
   });
 }
 
-function drawLabel(ctx,main,sub,ox,oy,color,bold){
-  const mf=`${bold?'bold ':''} ${bold?10:9}px 'JetBrains Mono',monospace`;
-  ctx.font=mf;const tw=ctx.measureText(main).width;
-  ctx.fillStyle='rgba(13,17,23,0.82)';ctx.beginPath();ctx.roundRect(ox-tw/2-4,oy,tw+8,sub?22:13,3);ctx.fill();
-  ctx.fillStyle=bold?'#7dd3fc':color;ctx.font=mf;ctx.textAlign='center';ctx.fillText(main,ox,oy+10);
-  if(sub){ctx.font="8px 'Noto Sans JP',sans-serif";ctx.fillStyle='#7d8590';ctx.fillText(sub,ox,oy+20);}
+function drawLabel(ctx, main, sub, ox, oy, color, bold, sc=1) {
+  // フォントサイズは固定（ズームしても文字サイズは変わらず動線が見やすい）
+  const baseMain = bold ? 11 : 10;
+  const baseSub  = 9;
+  const fs  = baseMain;
+  const fss = baseSub;
+  const mf  = `${bold?'bold ':''} ${fs}px 'JetBrains Mono',monospace`;
+  ctx.font = mf;
+  const tw  = ctx.measureText(main).width;
+  const bh  = sub ? (fs + fss + 8) : (fs + 6);
+  const bw  = tw + 10;
+  // 背景ボックス
+  ctx.fillStyle = 'rgba(13,17,23,0.88)';
+  ctx.beginPath();
+  ctx.roundRect(ox - bw/2, oy, bw, bh, 3);
+  ctx.fill();
+  // メインラベル
+  ctx.fillStyle = bold ? '#7dd3fc' : color;
+  ctx.font = mf;
+  ctx.textAlign = 'center';
+  ctx.fillText(main, ox, oy + fs);
+  // サブラベル（特記事項）
+  if (sub) {
+    ctx.font = `${fss}px 'Noto Sans JP',sans-serif`;
+    ctx.fillStyle = '#8b949e';
+    ctx.fillText(sub, ox, oy + fs + fss + 2);
+  }
 }
 function drawCircleNode(ctx,cx,cy,r,color,glow,label,isEnd){
   ctx.save();if(glow){ctx.shadowColor=color;ctx.shadowBlur=12;}
   ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
   if(isEnd){ctx.strokeStyle='#e6edf3';ctx.lineWidth=1.5;ctx.stroke();}ctx.restore();
   if(label){ctx.fillStyle='#e6edf3';ctx.font=`bold ${r>7?9:8}px 'JetBrains Mono',monospace`;ctx.textAlign='center';ctx.fillText(label.slice(0,4),cx,cy-r-4);}
+}
+function drawCircleNodeScaled(ctx,cx,cy,r,color,glow,label,isEnd,ns=1){
+  ctx.save();if(glow){ctx.shadowColor=color;ctx.shadowBlur=12;}
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
+  if(isEnd){ctx.strokeStyle='#e6edf3';ctx.lineWidth=1.5;ctx.stroke();}
+  ctx.restore();
+  if(label){
+    const fs = r > 7 ? 9 : 8; // 固定フォントサイズ
+    ctx.fillStyle='#e6edf3';
+    ctx.font=`bold ${fs}px 'JetBrains Mono',monospace`;
+    ctx.textAlign='center';
+    ctx.fillText(label.slice(0,12),cx,cy-r-4);
+  }
 }
 
 function drawAllMaps() {
@@ -585,20 +763,30 @@ function drawAllMaps() {
     angle = finalAngle;
     return pts;
   });
-  let activeFloor = -1;
-  if (activeRowIdx >= 0) {
-    floors.forEach((fl,fi) => { if(fl.segs.some(s=>s.idx===activeRowIdx)) activeFloor=fi; });
-  }
+  // フロア数が変わったときだけ DOM 再構築・スケール配列を初期化
   const existing = container.querySelectorAll('.floor-panel');
   if (existing.length !== floors.length) {
+    // 新しいフロア数に合わせてスケール・回転配列を拡張（既存値を保持）
+    while (floorScales.length  < floors.length) floorScales.push(1.0);
+    while (floorRotates.length < floors.length) floorRotates.push(0);
     container.innerHTML = '';
     floors.forEach((fl,fi) => container.appendChild(buildFloorPanel(fl,fi)));
     insertEvConnectors(container, floors);
   }
+  let activeFloor = -1;
+  if (activeRowIdx >= 0) {
+    floors.forEach((fl,fi) => { if(fl.segs.some(s=>s.idx===activeRowIdx)) activeFloor=fi; });
+  }
   container.querySelectorAll('.floor-panel').forEach((panel, fi) => {
     panel.style.outline = fi===activeFloor ? '2px solid rgba(47,129,247,0.4)' : 'none';
     const cv = panel.querySelector('canvas');
-    if (cv && floorPts[fi]) drawFloorCanvas(cv, floorPts[fi], floors[fi].color);
+    if (cv && floorPts[fi]) drawFloorCanvas(cv, floorPts[fi], floors[fi].color, floorScales[fi]||1.0, floorRotates[fi]||0);
+    // ズーム倍率バッジを更新
+    const zl = panel.querySelector('.zoom-label');
+    if (zl) zl.textContent = `×${(floorScales[fi]||1.0).toFixed(1)}`;
+    // 回転角バッジを更新
+    const rl = panel.querySelector('.rotate-label');
+    if (rl) rl.textContent = (floorRotates[fi]||0) === 0 ? '0°' : `${floorRotates[fi]}°`;
   });
   const total = floorPts.reduce((s,p)=>s+p.length,0);
   document.getElementById('mapInfo').textContent =
@@ -610,7 +798,19 @@ function drawAllMaps() {
 function buildFloorPanel(fl, fi) {
   const div=document.createElement('div'); div.className='floor-panel';
   const bar=document.createElement('div'); bar.className='floor-label-bar';
-  bar.innerHTML=`<span class="floor-badge" style="background:${fl.color};">フロア ${fi+1}</span><span class="floor-name">${escapeHtml(fl.label)}</span>`;
+  bar.innerHTML=`
+    <span class="floor-badge" style="background:${fl.color};">フロア ${fi+1}</span>
+    <span class="floor-name">${escapeHtml(fl.label)}</span>
+    <span style="margin-left:auto;display:flex;align-items:center;gap:4px;">
+      <span class="rotate-label" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#484f58;min-width:22px;text-align:right;">0°</span>
+      <button class="btn-map" onclick="floorRotate(${fi},-90);event.stopPropagation();" title="左に90°回転">↺</button>
+      <button class="btn-map" onclick="floorRotate(${fi},90);event.stopPropagation();"  title="右に90°回転">↻</button>
+      <div style="width:1px;height:10px;background:#30363d;margin:0 2px;"></div>
+      <span class="zoom-label" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#484f58;min-width:28px;text-align:right;">×1.0</span>
+      <button class="btn-map" onclick="floorZoom(${fi},1.3);event.stopPropagation();" title="拡大">＋</button>
+      <button class="btn-map" onclick="floorZoom(${fi},1/1.3);event.stopPropagation();" title="縮小">－</button>
+      <button class="btn-map" onclick="floorFit(${fi});event.stopPropagation();" title="FIT">FIT</button>
+    </span>`;
   div.appendChild(bar);
   const wrap=document.createElement('div'); wrap.className='map-wrap';
   const cv=document.createElement('canvas'); cv.dataset.floorIdx=fi;
@@ -632,14 +832,29 @@ function insertEvConnectors(container, floors) {
 function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function mapRotate(deg) {
-  cvRotate=((cvRotate+deg)%360+360)%360;
-  const l=document.getElementById('rotateLabel'); if(l) l.textContent=cvRotate===0?'0 deg':`${cvRotate} deg`;
+  // ヘッダーの↺↻は全フロアを一括回転
+  floorRotates = floorRotates.map(r => (((r||0)+deg)%360+360)%360);
   drawAllMaps();
 }
-function mapZoom(factor) { cvScale=Math.max(0.2,Math.min(6,cvScale*factor)); drawAllMaps(); }
+// フロア個別ズーム
+function floorZoom(fi, factor) {
+  floorScales[fi] = Math.max(0.2, Math.min(20, (floorScales[fi]||1.0) * factor));
+  drawAllMaps();
+}
+function floorRotate(fi, deg) {
+  floorRotates[fi] = (((floorRotates[fi]||0) + deg) % 360 + 360) % 360;
+  drawAllMaps();
+}
+function floorFit(fi) {
+  floorScales[fi]  = 1.0;
+  floorRotates[fi] = 0;
+  drawAllMaps();
+}
+// ヘッダーの全体FIT（全フロアをリセット＋回転リセット）
 function mapFit() {
-  cvScale=1.0; cvRotate=0; activeRowIdx=-1;
-  const l=document.getElementById('rotateLabel'); if(l) l.textContent='0 deg';
+  floorScales  = floorScales.map(()=>1.0);
+  floorRotates = floorRotates.map(()=>0);
+  activeRowIdx = -1;
   document.querySelectorAll('.route-row.active-row').forEach(r=>r.classList.remove('active-row'));
   drawAllMaps();
 }
@@ -773,7 +988,13 @@ function addRowWithVal(type, val, note, otherVal='') {
   tr.addEventListener('click', e => { if (!e.target.closest('button')) onRowClick(tr); });
 
   const cat   = ITEM_CATEGORIES.find(c => c.value === type) || ITEM_CATEGORIES[2];
-  const bHtml = buildBCellHtml(cat.group, val, otherVal);
+  // straight グループの場合、val から数値部分だけを取り出してカンマ付きに変換
+  let cleanVal = val;
+  if (cat.group === 'straight') {
+    const m = String(val).replace(/,/g,'').match(/(\d+(?:\.\d+)?)/);
+    cleanVal = m ? Number(m[1]).toLocaleString() : '';
+  }
+  const bHtml = buildBCellHtml(cat.group, cleanVal, otherVal);
 
   tr.innerHTML = `
     <td><span class="row-num"></span></td>
@@ -819,10 +1040,23 @@ function buildBCellHtml(group, val, otherVal) {
         placeholder="内容を手入力してください" oninput="onChange()">
     `;
   } else {
-    const ph = group === 'straight' ? '例：16,000mm' : '例：A地点（完成出庫品置き場）';
+    // straight / point
+    const isStr = (group === 'straight');
+    const ph = isStr ? '例：16,000' : '例：A地点（完成出庫品置き場）';
+    // テンプレート値からカンマ付き数値を生成
+    const rawNum = isStr ? String(val).replace(/[^0-9]/g,'') : '';
+    const fmtVal = isStr && rawNum !== '' ? Number(rawNum).toLocaleString() : (isStr ? '' : val);
+    const showMm = isStr && fmtVal !== '';
     return `
       <select class="b-select" style="display:none;" oninput="onChange()"></select>
-      <input type="text" class="val-input" value="${escapeAttr(val)}" placeholder="${ph}" oninput="onChange()">
+      <div class="${isStr ? 'mm-wrap' : ''}">
+        <input type="text" class="val-input"
+          value="${escapeAttr(fmtVal)}"
+          placeholder="${ph}"
+          oninput="${isStr ? 'onNumInput(this)' : 'onValInput(this)'}"
+          onchange="onChange()">
+        ${isStr ? `<span class="mm-suffix${showMm?' show':''}">mm</span>` : ''}
+      </div>
       <input type="text" class="b-other-input" style="display:none;" oninput="onChange()">
     `;
   }
@@ -871,6 +1105,30 @@ function clearAll() {
   onChange();
 }
 
+/* 数値入力時にカンマ区切りを自動付加 */
+function onNumInput(input) {
+  const pos   = input.selectionStart;
+  const raw   = input.value.replace(/[^0-9]/g, '');
+  const fmt   = raw !== '' ? Number(raw).toLocaleString() : '';
+  const diff  = fmt.length - input.value.length;
+  input.value = fmt;
+  // カーソル位置を維持
+  try { input.setSelectionRange(pos + diff, pos + diff); } catch(e) {}
+  // mmサフィックス表示
+  const suffix = input.parentElement ? input.parentElement.querySelector('.mm-suffix') : null;
+  if (suffix) suffix.classList.toggle('show', fmt !== '');
+  onChange();
+}
+
+/* 数値入力時にmmサフィックスを表示/非表示 */
+function onValInput(input) {
+  const suffix = input.parentElement ? input.parentElement.querySelector('.mm-suffix') : null;
+  if (suffix) {
+    suffix.classList.toggle('show', input.value.trim() !== '');
+  }
+  onChange();
+}
+
 /* ═══════════════════════════════════════════════════════
    B値取得
 ═══════════════════════════════════════════════════════ */
@@ -883,7 +1141,15 @@ function getBValue(tr) {
     if (v === 'その他' && other && other.value.trim()) return `その他：${other.value.trim()}`;
     return v;
   }
-  if (valInput && valInput.style.display !== 'none') return valInput.value;
+  if (valInput && valInput.style.display !== 'none') {
+    // number type input → mm単位付きで返す
+    const v = valInput.value;
+    if (valInput.type === 'number' && v !== '') {
+      const num = parseFloat(v);
+      if (!isNaN(num)) return `${num.toLocaleString()}mm`;
+    }
+    return v;
+  }
   return '';
 }
 
@@ -1118,6 +1384,39 @@ function init() {
   updatePreview();
 }
 init();
+
+/* ═══════════════════════════════════════════════════════
+   PDF保存（ブラウザ印刷ダイアログ）
+═══════════════════════════════════════════════════════ */
+function exportPDF() {
+  // 1. 各フロアのCanvasをPNG画像に変換して <img> に差し替え（印刷時に消えないよう）
+  const panels = document.querySelectorAll('.floor-panel');
+  const replacements = [];
+  panels.forEach(panel => {
+    const cv = panel.querySelector('canvas');
+    if (!cv) return;
+    const dataUrl = cv.toDataURL('image/png');
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    img.style.display = 'block';
+    img.style.margin  = '0 auto';
+    img.style.maxWidth = '100%';
+    img.dataset.pdfReplace = '1';
+    cv.parentNode.insertBefore(img, cv);
+    cv.style.display = 'none';
+    replacements.push({ cv, img });
+  });
+
+  // 2. 印刷ダイアログを開く
+  window.print();
+
+  // 3. 印刷後に元のCanvas表示に戻す
+  replacements.forEach(({ cv, img }) => {
+    cv.style.display = '';
+    img.remove();
+  });
+}
+
 </script>
 </body>
 </html>
