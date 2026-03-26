@@ -482,8 +482,9 @@ function buildFloors(segs) {
   const st = segs.find(s => s.fixed === 'start');
   let flLabel = st && st.val ? st.val.slice(0,16) : 'フロア 1';
   segs.forEach(seg => {
-    if (seg.type === '停止・連携・特殊' && isEvExit(seg.val)) {
-      buf.push({ ...seg, _evExit: true });
+    // EV乗り込みでフロアを分割（乗り込み行自体は現フロアの末尾に含める）
+    if (seg.type === '停止・連携・特殊' && isEvBoard(seg.val)) {
+      buf.push(seg);
       floors.push({ idx: fi, label: flLabel, segs: buf, color: FLOOR_COLORS[fi % FLOOR_COLORS.length] });
       fi++; buf = [];
       flLabel = seg.note ? seg.note.slice(0,16) : `フロア ${fi + 1}`;
@@ -624,8 +625,8 @@ function drawFloorCanvas(canvas, pts, floorColor, sc, floorRotate) {
       if(len2>20){
         const lb2=p.dist>=1000?`${(p.dist/1000).toFixed(1)}m`:`${p.dist}mm`;
         ctx.save();ctx.translate(mx2,my2);
-        if(Math.abs(dy2)>Math.abs(dx2)) drawLabel(ctx,lb2,'',14,-6,'#888888',false,sc);
-        else                             drawLabel(ctx,lb2,'',0,-17,'#888888',false,sc);
+        if(Math.abs(dy2)>Math.abs(dx2)) drawLabel(ctx,lb2,'',28,-7,'#888888',false,sc);
+        else                             drawLabel(ctx,lb2,'', 0,-22,'#888888',false,sc);
         ctx.restore();
       }
       return; // 通常描画をスキップ
@@ -640,12 +641,12 @@ function drawFloorCanvas(canvas, pts, floorColor, sc, floorRotate) {
     const dx=tx(p.x)-tx(p.fromX),dy=ty(p.y)-ty(p.fromY),len=Math.sqrt(dx*dx+dy*dy);
     if(len>28){
       const lb=p.dist>=1000?`${(p.dist/1000).toFixed(1)}m`:`${p.dist}mm`;
-      // ズーム倍率が高いほど特記事項を長く表示（sc>=3 でフル表示）
       const maxNoteChars = sc >= 2 ? 30 : sc >= 1.2 ? 18 : 10;
       const nt=p.note?p.note.slice(0,maxNoteChars)+(p.note.length>maxNoteChars?'…':''):'';
       ctx.save();ctx.translate(mx,my);
-      if(Math.abs(dy)>Math.abs(dx)) drawLabel(ctx,lb,nt,12,-6,act?'#2f81f7':'#3fb950',act,sc);
-      else                           drawLabel(ctx,lb,nt,0,-19,act?'#2f81f7':'#3fb950',act,sc);
+      // 縦線→右側にラベルを逃がす、横線→上側に逃がす（動線への被りを防ぐ）
+      if(Math.abs(dy)>Math.abs(dx)) drawLabel(ctx,lb,nt,28, -7,act?'#2f81f7':'#3fb950',act,sc);
+      else                           drawLabel(ctx,lb,nt, 0,-22,act?'#2f81f7':'#3fb950',act,sc);
       ctx.restore();
     }
   });
@@ -705,31 +706,40 @@ function drawFloorCanvas(canvas, pts, floorColor, sc, floorRotate) {
 }
 
 function drawLabel(ctx, main, sub, ox, oy, color, bold, sc=1) {
-  // フォントサイズは固定（ズームしても文字サイズは変わらず動線が見やすい）
   const baseMain = bold ? 11 : 10;
   const baseSub  = 9;
   const fs  = baseMain;
   const fss = baseSub;
   const mf  = `${bold?'bold ':''} ${fs}px 'JetBrains Mono',monospace`;
   ctx.font = mf;
-  const tw  = ctx.measureText(main).width;
-  const bh  = sub ? (fs + fss + 8) : (fs + 6);
-  const bw  = tw + 10;
+  const twMain = ctx.measureText(main).width;
+  ctx.font = `${fss}px 'Noto Sans JP',sans-serif`;
+  const twSub  = sub ? ctx.measureText(sub).width : 0;
+  const bw = Math.max(twMain, twSub) + 10;
+  const bh = sub ? (fs + fss + 8) : (fs + 6);
+
+  // ox>0 なら右横配置（左端基点）、ox<=0 なら中央配置
+  const isRight = ox > 0;
+  const boxX = isRight ? ox : ox - bw/2;
+
   // 背景ボックス
-  ctx.fillStyle = 'rgba(13,17,23,0.88)';
+  ctx.fillStyle = 'rgba(13,17,23,0.92)';
   ctx.beginPath();
-  ctx.roundRect(ox - bw/2, oy, bw, bh, 3);
+  ctx.roundRect(boxX, oy, bw, bh, 3);
   ctx.fill();
+
   // メインラベル
-  ctx.fillStyle = bold ? '#7dd3fc' : color;
   ctx.font = mf;
-  ctx.textAlign = 'center';
-  ctx.fillText(main, ox, oy + fs);
+  ctx.fillStyle = bold ? '#7dd3fc' : color;
+  ctx.textAlign = isRight ? 'left' : 'center';
+  const textX = isRight ? ox + 4 : ox;
+  ctx.fillText(main, textX, oy + fs);
+
   // サブラベル（特記事項）
   if (sub) {
     ctx.font = `${fss}px 'Noto Sans JP',sans-serif`;
     ctx.fillStyle = '#8b949e';
-    ctx.fillText(sub, ox, oy + fs + fss + 2);
+    ctx.fillText(sub, textX, oy + fs + fss + 2);
   }
 }
 function drawCircleNode(ctx,cx,cy,r,color,glow,label,isEnd){
